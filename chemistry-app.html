@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>화학 교육 플랫폼</title>
+<script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0e1a;--bg2:#0f1628;--bg3:#141e35;--card:#1a2540;--card2:#1f2d4a;
+  --neon:#00ffc8;--neon2:#00d4a8;--neon3:#7fffea;
+  --text:#e0e8ff;--text2:#8899cc;--text3:#556699;
+  --red:#ff4466;--orange:#ff8833;--yellow:#ffdd00;
+  --border:#2a3a5a;--shadow:0 0 20px rgba(0,255,200,0.15);
+}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',sans-serif;min-height:100vh}
+.page{display:none;min-height:100vh}
+.page.active{display:block}
+
+/* ===== MAIN PAGE ===== */
+#main{
+  background: radial-gradient(ellipse at 30% 20%, #0d2040 0%, var(--bg) 60%),
+              radial-gradient(ellipse at 70% 80%, #0d1a30 0%, transparent 60%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;
+}
+.main-title{text-align:center;margin-bottom:60px}
+.main-title h1{font-size:3em;font-weight:700;letter-spacing:3px;
+  background:linear-gradient(135deg,var(--neon),#4488ff,var(--neon));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  text-shadow:none;margin-bottom:10px}
+.main-title p{color:var(--text2);font-size:1.1em;letter-spacing:1px}
+.main-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;max-width:800px;width:100%}
+.main-card{
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:36px 28px;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;
+  text-align:center;
+}
+.main-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--neon),transparent);
+  transform:translateX(-100%);transition:transform 0.4s;
+}
+.main-card:hover::before{transform:translateX(0)}
+.main-card:hover{border-color:var(--neon);box-shadow:var(--shadow);transform:translateY(-4px)}
+.main-card .icon{font-size:3em;margin-bottom:16px}
+.main-card h2{font-size:1.3em;color:var(--neon);margin-bottom:8px;font-weight:600}
+.main-card p{color:var(--text2);font-size:0.9em;line-height:1.5}
+
+/* ===== COMMON ===== */
+.page-header{
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:16px 24px;display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:100;backdrop-filter:blur(10px);
+}
+.back-btn{
+  background:transparent;border:1px solid var(--border);color:var(--text2);
+  padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.9em;
+  transition:all 0.2s;display:flex;align-items:center;gap:6px;
+}
+.back-btn:hover{border-color:var(--neon);color:var(--neon)}
+.page-title{font-size:1.4em;font-weight:600;color:var(--neon);letter-spacing:1px}
+.container{max-width:1400px;margin:0 auto;padding:24px}
+
+/* ===== PERIODIC TABLE ===== */
+.pt-controls{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.btn{
+  background:var(--card);border:1px solid var(--border);color:var(--text2);
+  padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85em;transition:all 0.2s;
+}
+.btn:hover,.btn.active{background:var(--neon);color:#000;border-color:var(--neon);font-weight:600}
+.pt-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:0.8em;color:var(--text2)}
+.legend-dot{width:12px;height:12px;border-radius:3px}
+.pt-wrapper{overflow-x:auto;padding-bottom:16px}
+.pt-grid{
+  display:grid;grid-template-columns:repeat(18,minmax(52px,1fr));
+  grid-template-rows:repeat(10,52px);gap:3px;min-width:980px;
+}
+.element-cell{
+  background:var(--card);border:1px solid var(--border);border-radius:4px;
+  cursor:pointer;transition:all 0.15s;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:2px;
+}
+.element-cell:hover{border-color:var(--neon);box-shadow:0 0 10px rgba(0,255,200,0.3);z-index:10;transform:scale(1.08)}
+.el-num{font-size:0.55em;color:var(--text3);line-height:1;align-self:flex-start;margin-left:3px}
+.el-sym{font-size:1.1em;font-weight:700;line-height:1.1;color:var(--text)}
+.el-name{font-size:0.45em;color:var(--text2);line-height:1}
+.el-mass{font-size:0.42em;color:var(--text3);line-height:1}
+.pt-separator{grid-column:1/-1;height:8px}
+.pt-label{
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.65em;color:var(--text3);font-style:italic;
+}
+
+/* Element categories */
+.cat-alkali{background:#1a2a0a;border-color:#4a7a1a}
+.cat-alkaline{background:#1a2510;border-color:#4a6a20}
+.cat-transition{background:#0a1a2a;border-color:#1a4a6a}
+.cat-post-transition{background:#1a1a2a;border-color:#3a3a6a}
+.cat-metalloid{background:#1a1a0a;border-color:#5a5a1a}
+.cat-nonmetal{background:#0a1a1a;border-color:#1a5a5a}
+.cat-halogen{background:#1a0a1a;border-color:#5a1a5a}
+.cat-noble{background:#1a0a0a;border-color:#6a1a1a}
+.cat-lanthanide{background:#1a0a1a;border-color:#5a1a4a}
+.cat-actinide{background:#1a0a10;border-color:#5a1a3a}
+
+/* Heatmap mode */
+.heatmap-mode .element-cell{border-color:transparent}
+
+/* Modal */
+.modal-overlay{
+  display:none;position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,0.8);z-index:1000;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--neon);border-radius:16px;
+  padding:32px;max-width:520px;width:90%;position:relative;
+  box-shadow:0 0 40px rgba(0,255,200,0.2);
+}
+.modal-close{
+  position:absolute;top:16px;right:16px;background:none;border:none;
+  color:var(--text2);font-size:1.5em;cursor:pointer;
+}
+.modal-close:hover{color:var(--neon)}
+.modal-sym{font-size:4em;font-weight:700;color:var(--neon);text-align:center;margin-bottom:8px}
+.modal-name{text-align:center;font-size:1.4em;color:var(--text);margin-bottom:4px}
+.modal-num{text-align:center;color:var(--text2);margin-bottom:20px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-item{background:var(--card);border-radius:8px;padding:12px}
+.modal-item label{font-size:0.75em;color:var(--text3);display:block;margin-bottom:4px}
+.modal-item span{font-size:0.95em;color:var(--text);font-weight:500}
+.modal-item.full{grid-column:1/-1}
+
+/* ===== ANALYZER ===== */
+.analyzer-layout{display:grid;grid-template-columns:380px 1fr;gap:24px}
+.input-section{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border)}
+.input-group{margin-bottom:20px}
+.input-group label{display:block;color:var(--text2);font-size:0.85em;margin-bottom:8px;letter-spacing:0.5px}
+.formula-input{
+  width:100%;background:var(--bg);border:2px solid var(--border);color:var(--text);
+  padding:14px 16px;border-radius:10px;font-size:1.2em;font-family:inherit;
+  transition:border-color 0.2s;outline:none;
+}
+.formula-input:focus{border-color:var(--neon);box-shadow:0 0 10px rgba(0,255,200,0.1)}
+.analyze-btn{
+  width:100%;background:var(--neon);color:#000;border:none;padding:14px;
+  border-radius:10px;font-size:1.05em;font-weight:700;cursor:pointer;transition:all 0.2s;
+}
+.analyze-btn:hover{background:var(--neon3);box-shadow:0 0 20px rgba(0,255,200,0.4)}
+.quick-molecules{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.quick-btn{
+  background:var(--bg);border:1px solid var(--border);color:var(--text2);
+  padding:6px 12px;border-radius:20px;cursor:pointer;font-size:0.85em;transition:all 0.2s;
+}
+.quick-btn:hover{border-color:var(--neon);color:var(--neon)}
+.results-section{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border)}
+.result-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.mol-weight{font-size:2em;font-weight:700;color:var(--neon)}
+.mol-formula-display{font-size:1.1em;color:var(--text2)}
+.result-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.result-card{background:var(--bg);border-radius:8px;padding:14px;border:1px solid var(--border)}
+.result-card label{font-size:0.75em;color:var(--text3);display:block;margin-bottom:6px}
+.result-card .value{font-size:1em;color:var(--text);font-weight:600}
+.result-card .sub{font-size:0.78em;color:var(--text2);margin-top:4px}
+.composition-bars{margin-top:16px}
+.comp-bar{margin-bottom:10px}
+.comp-bar-header{display:flex;justify-content:space-between;font-size:0.85em;margin-bottom:4px}
+.comp-bar-track{background:var(--bg);border-radius:4px;height:8px;overflow:hidden}
+.comp-bar-fill{height:100%;border-radius:4px;transition:width 0.5s ease}
+.placeholder-msg{color:var(--text3);text-align:center;padding:40px;font-size:1.1em}
+
+/* ===== 3D VIEWER ===== */
+.viewer-layout{display:grid;grid-template-columns:320px 1fr;gap:24px}
+.viewer-controls{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border)}
+#mol-viewer-container{
+  background:var(--bg);border:1px solid var(--border);border-radius:12px;
+  height:500px;position:relative;overflow:hidden;
+}
+.viewer-placeholder{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;color:var(--text3);
+}
+.viewer-placeholder .icon{font-size:4em;margin-bottom:12px}
+.model-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.viewer-info{margin-top:16px;padding:12px;background:var(--bg);border-radius:8px;border:1px solid var(--border)}
+.spinner{
+  width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--neon);
+  border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== ION TAB ===== */
+.ion-layout{display:grid;grid-template-columns:1fr 380px;gap:24px}
+.ion-filters{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.ion-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.ion-card{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:16px;cursor:pointer;transition:all 0.25s;position:relative;
+}
+.ion-card:hover{border-color:var(--neon);transform:translateY(-3px)}
+.ion-card.cation:hover{box-shadow:0 0 20px rgba(255,80,80,0.3)}
+.ion-card.anion:hover{box-shadow:0 0 20px rgba(80,80,255,0.3)}
+.ion-card.selected{border-color:var(--neon);box-shadow:var(--shadow)}
+.ion-symbol{font-size:1.8em;font-weight:700;margin-bottom:4px}
+.ion-card.cation .ion-symbol{color:#ff6688}
+.ion-card.anion .ion-symbol{color:#6688ff}
+.ion-radius-row{display:flex;justify-content:space-between;font-size:0.78em;color:var(--text2);margin-top:8px}
+.ion-change{font-size:0.75em;padding:2px 6px;border-radius:4px;font-weight:600}
+.change-decrease{background:rgba(255,68,102,0.2);color:#ff4466}
+.change-increase{background:rgba(68,102,255,0.2);color:#4466ff}
+.ion-detail{background:var(--card);border-radius:12px;padding:24px;border:1px solid var(--border)}
+.ion-detail-sym{font-size:3em;font-weight:700;text-align:center;margin-bottom:16px}
+.ion-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.ion-detail-item{background:var(--bg);border-radius:8px;padding:10px}
+.ion-detail-item label{font-size:0.72em;color:var(--text3);display:block;margin-bottom:4px}
+.ion-detail-item span{font-size:0.9em;color:var(--text)}
+#ion-viewer-container{background:var(--bg);border-radius:8px;height:220px;border:1px solid var(--border);margin-bottom:16px;position:relative}
+.ion-toggle-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;justify-content:center}
+.toggle-label{font-size:0.85em;color:var(--text2)}
+.toggle-switch{position:relative;width:50px;height:26px;cursor:pointer}
+.toggle-switch input{display:none}
+.toggle-slider{
+  position:absolute;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:13px;transition:0.3s;
+}
+.toggle-slider::before{
+  content:'';position:absolute;width:20px;height:20px;bottom:3px;left:3px;
+  background:var(--text2);border-radius:50%;transition:0.3s;
+}
+.toggle-switch input:checked+.toggle-slider{background:var(--neon)}
+.toggle-switch input:checked+.toggle-slider::before{transform:translateX(24px);background:#000}
+.compounds-list{margin-top:12px}
+.compound-item{
+  background:var(--bg);border:1px solid var(--border);border-radius:6px;
+  padding:10px 14px;margin-bottom:8px;cursor:pointer;transition:all 0.2s;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.compound-item:hover{border-color:var(--neon);color:var(--neon)}
+.compound-formula{font-weight:600}
+.compound-name{font-size:0.8em;color:var(--text2)}
+.section-title{font-size:1em;color:var(--neon);font-weight:600;margin-bottom:10px;margin-top:16px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  .main-grid{grid-template-columns:1fr}
+  .analyzer-layout,.viewer-layout,.ion-layout{grid-template-columns:1fr}
+  .result-cards{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  .main-title h1{font-size:2em}
+  .result-cards{grid-template-columns:1fr}
+}
+
+/* Glow animations */
+@keyframes glow{
+  0%,100%{box-shadow:0 0 10px rgba(0,255,200,0.2)}
+  50%{box-shadow:0 0 25px rgba(0,255,200,0.5)}
+}
+.neon-glow{animation:glow 2s ease-in-out infinite}
+
+/* Trend bar */
+.trend-section{margin-top:12px;padding:10px;background:var(--bg);border-radius:8px}
+.trend-bar-container{height:8px;background:var(--border);border-radius:4px;margin-top:6px;overflow:hidden}
+.trend-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,#4466ff,#ff4466)}
+</style>
+</head>
+<body>
+
+<!-- ==================== MAIN PAGE ==================== -->
+<div id="main" class="page active">
+  <div class="main-title">
+    <h1>⚗ CHEMISTRY LAB</h1>
+    <p>인터랙티브 화학 교육 플랫폼</p>
+  </div>
+  <div class="main-grid">
+    <div class="main-card" onclick="goTo('periodic')">
+      <div class="icon">🔬</div>
+      <h2>원소 주기율표</h2>
+      <p>118개 원소의 인터랙티브 주기율표.<br>전기음성도 히트맵 & 분류별 색상</p>
+    </div>
+    <div class="main-card" onclick="goTo('analyzer')">
+      <div class="icon">⚗</div>
+      <h2>분자 분석기</h2>
+      <p>분자식 입력으로 분자량, 극성,<br>결합각, 혼성 오비탈 즉시 분석</p>
+    </div>
+    <div class="main-card" onclick="goTo('viewer')">
+      <div class="icon">🧬</div>
+      <h2>3D 분자 뷰어</h2>
+      <p>PubChem 연동 3D 구조 시각화.<br>다양한 표현 모델 지원</p>
+    </div>
+    <div class="main-card" onclick="goTo('ions')">
+      <div class="icon">⚡</div>
+      <h2>이온 탐색기</h2>
+      <p>30+ 이온의 반지름, 전자배치,<br>이온화 에너지 & 3D 시각화</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PERIODIC TABLE PAGE ==================== -->
+<div id="periodic" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('main')">← 메인</button>
+    <span class="page-title">원소 주기율표</span>
+  </div>
+  <div class="container">
+    <div class="pt-controls">
+      <button class="btn active" id="btn-category" onclick="setMode('category')">분류별 색상</button>
+      <button class="btn" id="btn-heatmap" onclick="setMode('heatmap')">전기음성도 히트맵</button>
+      <button class="btn" id="btn-default" onclick="setMode('default')">기본</button>
+    </div>
+    <div class="pt-legend" id="pt-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#4a7a1a"></div>알칼리 금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4a6a20"></div>알칼리 토금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1a4a6a"></div>전이 금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3a3a6a"></div>전이후 금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a5a1a"></div>준금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1a5a5a"></div>비금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a1a5a"></div>할로겐</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#6a1a1a"></div>비활성 기체</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a1a4a"></div>란타넘족</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a1a3a"></div>악티늄족</div>
+    </div>
+    <div class="pt-wrapper">
+      <div class="pt-grid" id="pt-grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Element Detail Modal -->
+<div class="modal-overlay" id="el-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-sym" id="m-sym"></div>
+    <div class="modal-name" id="m-name"></div>
+    <div class="modal-num" id="m-num"></div>
+    <div class="modal-grid">
+      <div class="modal-item"><label>원자량</label><span id="m-mass"></span></div>
+      <div class="modal-item"><label>전기음성도</label><span id="m-en"></span></div>
+      <div class="modal-item"><label>족 / 주기</label><span id="m-gp"></span></div>
+      <div class="modal-item"><label>상온 상태</label><span id="m-state"></span></div>
+      <div class="modal-item full"><label>전자 배치</label><span id="m-ec"></span></div>
+      <div class="modal-item"><label>분류</label><span id="m-cat"></span></div>
+      <div class="modal-item"><label>원자 반지름</label><span id="m-ar"></span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ANALYZER PAGE ==================== -->
+<div id="analyzer" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('main')">← 메인</button>
+    <span class="page-title">분자 분석기</span>
+  </div>
+  <div class="container">
+    <div class="analyzer-layout">
+      <div class="input-section">
+        <div class="input-group">
+          <label>분자식 입력</label>
+          <input type="text" class="formula-input" id="formula-input" placeholder="예: H2O, CO2, CH4"
+            oninput="analyzeFormula(this.value)">
+        </div>
+        <div class="input-group">
+          <label>빠른 선택</label>
+          <div class="quick-molecules">
+            <button class="quick-btn" onclick="setFormula('H2O')">H₂O</button>
+            <button class="quick-btn" onclick="setFormula('CO2')">CO₂</button>
+            <button class="quick-btn" onclick="setFormula('CH4')">CH₄</button>
+            <button class="quick-btn" onclick="setFormula('NH3')">NH₃</button>
+            <button class="quick-btn" onclick="setFormula('C6H6')">C₆H₆</button>
+            <button class="quick-btn" onclick="setFormula('HCl')">HCl</button>
+            <button class="quick-btn" onclick="setFormula('H2SO4')">H₂SO₄</button>
+            <button class="quick-btn" onclick="setFormula('C2H5OH')">C₂H₅OH</button>
+            <button class="quick-btn" onclick="setFormula('NaCl')">NaCl</button>
+            <button class="quick-btn" onclick="setFormula('HNO3')">HNO₃</button>
+            <button class="quick-btn" onclick="setFormula('O2')">O₂</button>
+            <button class="quick-btn" onclick="setFormula('N2')">N₂</button>
+          </div>
+        </div>
+      </div>
+      <div class="results-section" id="results-section">
+        <div class="placeholder-msg" id="results-placeholder">
+          <div style="font-size:3em;margin-bottom:12px">⚗</div>
+          분자식을 입력하면 분석 결과가 표시됩니다
+        </div>
+        <div id="results-content" style="display:none">
+          <div class="result-header">
+            <div>
+              <div style="color:var(--text2);font-size:0.85em;margin-bottom:4px">분자량</div>
+              <div class="mol-weight"><span id="r-mw">-</span> <span style="font-size:0.5em;color:var(--text2)">g/mol</span></div>
+            </div>
+            <div class="mol-formula-display" id="r-formula"></div>
+          </div>
+          <div class="result-cards">
+            <div class="result-card">
+              <label>극성 여부</label>
+              <div class="value" id="r-polarity">-</div>
+              <div class="sub" id="r-polarity-reason">-</div>
+            </div>
+            <div class="result-card">
+              <label>쌍극자 모멘트</label>
+              <div class="value" id="r-dipole">-</div>
+            </div>
+            <div class="result-card">
+              <label>분자 구조</label>
+              <div class="value" id="r-shape">-</div>
+              <div class="sub" id="r-shape-en">-</div>
+            </div>
+            <div class="result-card">
+              <label>결합각</label>
+              <div class="value" id="r-angle">-</div>
+            </div>
+            <div class="result-card">
+              <label>혼성 오비탈</label>
+              <div class="value" id="r-hybrid">-</div>
+            </div>
+            <div class="result-card">
+              <label>분자간 인력</label>
+              <div class="value" id="r-iforce">-</div>
+            </div>
+          </div>
+          <div style="font-size:0.85em;color:var(--text2);margin-bottom:8px">원소 조성 (%)</div>
+          <div id="r-composition"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 3D VIEWER PAGE ==================== -->
+<div id="viewer" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('main')">← 메인</button>
+    <span class="page-title">3D 분자 뷰어</span>
+  </div>
+  <div class="container">
+    <div class="viewer-layout">
+      <div class="viewer-controls">
+        <div class="input-group" style="margin-bottom:16px">
+          <label style="color:var(--text2);font-size:0.85em;display:block;margin-bottom:8px">분자명 / 분자식 입력</label>
+          <input type="text" class="formula-input" id="viewer-input" placeholder="예: water, benzene, CH4"
+            style="font-size:1em" onkeydown="if(event.key==='Enter')loadMolecule()">
+        </div>
+        <button class="analyze-btn" onclick="loadMolecule()">3D 구조 불러오기</button>
+        <div class="quick-molecules" style="margin-top:12px">
+          <button class="quick-btn" onclick="loadMoleculeByName('water')">물</button>
+          <button class="quick-btn" onclick="loadMoleculeByName('carbon dioxide')">CO₂</button>
+          <button class="quick-btn" onclick="loadMoleculeByName('methane')">CH₄</button>
+          <button class="quick-btn" onclick="loadMoleculeByName('ammonia')">NH₃</button>
+          <button class="quick-btn" onclick="loadMoleculeByName('benzene')">벤젠</button>
+          <button class="quick-btn" onclick="loadMoleculeByName('ethanol')">에탄올</button>
+          <button class="quick-btn" onclick="loadMoleculeByName('glucose')">포도당</button>
+          <button class="quick-btn" onclick="loadMoleculeByName('caffeine')">카페인</button>
+        </div>
+        <div class="model-btns">
+          <button class="btn active" id="btn-stick" onclick="setViewStyle('stick')">Stick</button>
+          <button class="btn" id="btn-ball" onclick="setViewStyle('ball')">Ball & Stick</button>
+          <button class="btn" id="btn-sphere" onclick="setViewStyle('sphere')">Space Fill</button>
+        </div>
+        <div class="viewer-info" id="viewer-mol-info">
+          <div style="color:var(--text3);font-size:0.85em">분자 정보가 여기에 표시됩니다</div>
+        </div>
+      </div>
+      <div>
+        <div id="mol-viewer-container">
+          <div class="viewer-placeholder" id="viewer-ph">
+            <div class="icon">🧬</div>
+            <div>분자를 선택하거나 이름을 입력하세요</div>
+          </div>
+          <div id="viewer-loading" style="display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+            <div class="spinner"></div>
+            <div style="margin-top:12px;color:var(--text2)">불러오는 중...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ION PAGE ==================== -->
+<div id="ions" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('main')">← 메인</button>
+    <span class="page-title">이온 탐색기</span>
+  </div>
+  <div class="container">
+    <div class="ion-layout">
+      <div>
+        <div class="ion-filters">
+          <button class="btn active" id="ion-filter-all" onclick="filterIons('all')">전체</button>
+          <button class="btn" id="ion-filter-cation" onclick="filterIons('cation')">양이온</button>
+          <button class="btn" id="ion-filter-anion" onclick="filterIons('anion')">음이온</button>
+        </div>
+        <div class="ion-grid" id="ion-grid"></div>
+      </div>
+      <div>
+        <div class="ion-detail" id="ion-detail">
+          <div style="color:var(--text3);text-align:center;padding:40px">이온을 선택하면 상세 정보가 표시됩니다</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const ELEMENTS = [
+  // num, sym, name, mass, en, cat, period, group, state, ec, ar(pm), ie(kJ/mol), ea
+  [1,'H','수소',1.008,2.20,'nonmetal',1,1,'기체','1s¹',53,1312,-73],
+  [2,'He','헬륨',4.003,0,'noble',1,18,'기체','1s²',31,2372,0],
+  [3,'Li','리튬',6.941,0.98,'alkali',2,1,'고체','[He] 2s¹',167,520,-60],
+  [4,'Be','베릴륨',9.012,1.57,'alkaline',2,2,'고체','[He] 2s²',112,900,-0],
+  [5,'B','붕소',10.811,2.04,'metalloid',2,13,'고체','[He] 2s²2p¹',87,801,-27],
+  [6,'C','탄소',12.011,2.55,'nonmetal',2,14,'고체','[He] 2s²2p²',67,1086,-122],
+  [7,'N','질소',14.007,3.04,'nonmetal',2,15,'기체','[He] 2s²2p³',56,1402,-7],
+  [8,'O','산소',15.999,3.44,'nonmetal',2,16,'기체','[He] 2s²2p⁴',48,1314,-141],
+  [9,'F','플루오린',18.998,3.98,'halogen',2,17,'기체','[He] 2s²2p⁵',42,1681,-328],
+  [10,'Ne','네온',20.180,0,'noble',2,18,'기체','[He] 2s²2p⁶',38,2081,0],
+  [11,'Na','나트륨',22.990,0.93,'alkali',3,1,'고체','[Ne] 3s¹',190,496,-53],
+  [12,'Mg','마그네슘',24.305,1.31,'alkaline',3,2,'고체','[Ne] 3s²',145,738,-0],
+  [13,'Al','알루미늄',26.982,1.61,'post-transition',3,13,'고체','[Ne] 3s²3p¹',118,578,-43],
+  [14,'Si','규소',28.086,1.90,'metalloid',3,14,'고체','[Ne] 3s²3p²',111,787,-134],
+  [15,'P','인',30.974,2.19,'nonmetal',3,15,'고체','[Ne] 3s²3p³',98,1012,-72],
+  [16,'S','황',32.065,2.58,'nonmetal',3,16,'고체','[Ne] 3s²3p⁴',88,1000,-200],
+  [17,'Cl','염소',35.453,3.16,'halogen',3,17,'기체','[Ne] 3s²3p⁵',79,1251,-349],
+  [18,'Ar','아르곤',39.948,0,'noble',3,18,'기체','[Ne] 3s²3p⁶',71,1521,0],
+  [19,'K','칼륨',39.098,0.82,'alkali',4,1,'고체','[Ar] 4s¹',243,419,-48],
+  [20,'Ca','칼슘',40.078,1.00,'alkaline',4,2,'고체','[Ar] 4s²',194,590,-2],
+  [21,'Sc','스칸듐',44.956,1.36,'transition',4,3,'고체','[Ar] 3d¹4s²',184,633,-18],
+  [22,'Ti','타이타늄',47.867,1.54,'transition',4,4,'고체','[Ar] 3d²4s²',176,659,-8],
+  [23,'V','바나듐',50.942,1.63,'transition',4,5,'고체','[Ar] 3d³4s²',171,651,-51],
+  [24,'Cr','크로뮴',51.996,1.66,'transition',4,6,'고체','[Ar] 3d⁵4s¹',166,653,-64],
+  [25,'Mn','망가니즈',54.938,1.55,'transition',4,7,'고체','[Ar] 3d⁵4s²',161,717,-0],
+  [26,'Fe','철',55.845,1.83,'transition',4,8,'고체','[Ar] 3d⁶4s²',156,763,-16],
+  [27,'Co','코발트',58.933,1.88,'transition',4,9,'고체','[Ar] 3d⁷4s²',152,760,-64],
+  [28,'Ni','니켈',58.693,1.91,'transition',4,10,'고체','[Ar] 3d⁸4s²',149,737,-112],
+  [29,'Cu','구리',63.546,1.90,'transition',4,11,'고체','[Ar] 3d¹⁰4s¹',145,745,-119],
+  [30,'Zn','아연',65.38,1.65,'transition',4,12,'고체','[Ar] 3d¹⁰4s²',142,906,-0],
+  [31,'Ga','갈륨',69.723,1.81,'post-transition',4,13,'고체','[Ar] 3d¹⁰4s²4p¹',136,579,-29],
+  [32,'Ge','저마늄',72.630,2.01,'metalloid',4,14,'고체','[Ar] 3d¹⁰4s²4p²',125,762,-119],
+  [33,'As','비소',74.922,2.18,'metalloid',4,15,'고체','[Ar] 3d¹⁰4s²4p³',114,947,-78],
+  [34,'Se','셀레늄',78.971,2.55,'nonmetal',4,16,'고체','[Ar] 3d¹⁰4s²4p⁴',103,941,-195],
+  [35,'Br','브로민',79.904,2.96,'halogen',4,17,'액체','[Ar] 3d¹⁰4s²4p⁵',94,1140,-325],
+  [36,'Kr','크립톤',83.798,3.00,'noble',4,18,'기체','[Ar] 3d¹⁰4s²4p⁶',88,1351,0],
+  [37,'Rb','루비듐',85.468,0.82,'alkali',5,1,'고체','[Kr] 5s¹',265,403,-47],
+  [38,'Sr','스트론튬',87.62,0.95,'alkaline',5,2,'고체','[Kr] 5s²',219,550,-5],
+  [39,'Y','이트륨',88.906,1.22,'transition',5,3,'고체','[Kr] 4d¹5s²',212,600,-30],
+  [40,'Zr','지르코늄',91.224,1.33,'transition',5,4,'고체','[Kr] 4d²5s²',206,640,-41],
+  [41,'Nb','나이오븀',92.906,1.6,'transition',5,5,'고체','[Kr] 4d⁴5s¹',198,652,-86],
+  [42,'Mo','몰리브데넘',95.96,2.16,'transition',5,6,'고체','[Kr] 4d⁵5s¹',190,684,-72],
+  [43,'Tc','테크네튬',98,1.9,'transition',5,7,'고체','[Kr] 4d⁵5s²',183,702,-53],
+  [44,'Ru','루테늄',101.07,2.2,'transition',5,8,'고체','[Kr] 4d⁷5s¹',178,710,-101],
+  [45,'Rh','로듐',102.906,2.28,'transition',5,9,'고체','[Kr] 4d⁸5s¹',173,720,-110],
+  [46,'Pd','팔라듐',106.42,2.20,'transition',5,10,'고체','[Kr] 4d¹⁰',169,805,-54],
+  [47,'Ag','은',107.868,1.93,'transition',5,11,'고체','[Kr] 4d¹⁰5s¹',165,731,-126],
+  [48,'Cd','카드뮴',112.411,1.69,'transition',5,12,'고체','[Kr] 4d¹⁰5s²',161,868,-0],
+  [49,'In','인듐',114.818,1.78,'post-transition',5,13,'고체','[Kr] 4d¹⁰5s²5p¹',156,558,-29],
+  [50,'Sn','주석',118.710,1.96,'post-transition',5,14,'고체','[Kr] 4d¹⁰5s²5p²',145,709,-107],
+  [51,'Sb','안티모니',121.760,2.05,'metalloid',5,15,'고체','[Kr] 4d¹⁰5s²5p³',133,834,-103],
+  [52,'Te','텔루륨',127.60,2.10,'metalloid',5,16,'고체','[Kr] 4d¹⁰5s²5p⁴',123,869,-190],
+  [53,'I','아이오딘',126.904,2.66,'halogen',5,17,'고체','[Kr] 4d¹⁰5s²5p⁵',115,1008,-295],
+  [54,'Xe','제논',131.293,2.6,'noble',5,18,'기체','[Kr] 4d¹⁰5s²5p⁶',108,1170,0],
+  [55,'Cs','세슘',132.905,0.79,'alkali',6,1,'고체','[Xe] 6s¹',298,376,-46],
+  [56,'Ba','바륨',137.327,0.89,'alkaline',6,2,'고체','[Xe] 6s²',253,503,-14],
+  [57,'La','란타넘',138.905,1.1,'lanthanide',6,3,'고체','[Xe] 5d¹6s²',195,538,-48],
+  [58,'Ce','세륨',140.116,1.12,'lanthanide',6,null,'고체','[Xe] 4f¹5d¹6s²',185,534,-50],
+  [59,'Pr','프라세오디뮴',140.908,1.13,'lanthanide',6,null,'고체','[Xe] 4f³6s²',185,527,-50],
+  [60,'Nd','네오디뮴',144.242,1.14,'lanthanide',6,null,'고체','[Xe] 4f⁴6s²',185,533,-50],
+  [61,'Pm','프로메튬',145,1.13,'lanthanide',6,null,'고체','[Xe] 4f⁵6s²',185,540,-50],
+  [62,'Sm','사마륨',150.36,1.17,'lanthanide',6,null,'고체','[Xe] 4f⁶6s²',185,545,-50],
+  [63,'Eu','유로퓸',151.964,1.2,'lanthanide',6,null,'고체','[Xe] 4f⁷6s²',185,547,-50],
+  [64,'Gd','가돌리늄',157.25,1.2,'lanthanide',6,null,'고체','[Xe] 4f⁷5d¹6s²',180,593,-50],
+  [65,'Tb','터븀',158.925,1.2,'lanthanide',6,null,'고체','[Xe] 4f⁹6s²',175,566,-50],
+  [66,'Dy','디스프로슘',162.500,1.22,'lanthanide',6,null,'고체','[Xe] 4f¹⁰6s²',175,573,-50],
+  [67,'Ho','홀뮴',164.930,1.23,'lanthanide',6,null,'고체','[Xe] 4f¹¹6s²',175,581,-50],
+  [68,'Er','어븀',167.259,1.24,'lanthanide',6,null,'고체','[Xe] 4f¹²6s²',175,589,-50],
+  [69,'Tm','툴륨',168.934,1.25,'lanthanide',6,null,'고체','[Xe] 4f¹³6s²',175,597,-50],
+  [70,'Yb','이터븀',173.045,1.1,'lanthanide',6,null,'고체','[Xe] 4f¹⁴6s²',175,603,-50],
+  [71,'Lu','루테튬',174.967,1.27,'lanthanide',6,3,'고체','[Xe] 4f¹⁴5d¹6s²',175,524,-50],
+  [72,'Hf','하프늄',178.49,1.3,'transition',6,4,'고체','[Xe] 4f¹⁴5d²6s²',187,659,-0],
+  [73,'Ta','탄탈럼',180.948,1.5,'transition',6,5,'고체','[Xe] 4f¹⁴5d³6s²',170,761,-31],
+  [74,'W','텅스텐',183.84,2.36,'transition',6,6,'고체','[Xe] 4f¹⁴5d⁴6s²',162,770,-79],
+  [75,'Re','레늄',186.207,1.9,'transition',6,7,'고체','[Xe] 4f¹⁴5d⁵6s²',151,760,-15],
+  [76,'Os','오스뮴',190.23,2.2,'transition',6,8,'고체','[Xe] 4f¹⁴5d⁶6s²',144,840,-106],
+  [77,'Ir','이리듐',192.217,2.20,'transition',6,9,'고체','[Xe] 4f¹⁴5d⁷6s²',141,880,-151],
+  [78,'Pt','백금',195.084,2.28,'transition',6,10,'고체','[Xe] 4f¹⁴5d⁹6s¹',177,870,-205],
+  [79,'Au','금',196.967,2.54,'transition',6,11,'고체','[Xe] 4f¹⁴5d¹⁰6s¹',166,890,-223],
+  [80,'Hg','수은',200.592,2.00,'transition',6,12,'액체','[Xe] 4f¹⁴5d¹⁰6s²',171,1007,-0],
+  [81,'Tl','탈륨',204.383,1.62,'post-transition',6,13,'고체','[Xe] 4f¹⁴5d¹⁰6s²6p¹',156,589,-19],
+  [82,'Pb','납',207.2,2.33,'post-transition',6,14,'고체','[Xe] 4f¹⁴5d¹⁰6s²6p²',154,716,-35],
+  [83,'Bi','비스무트',208.980,2.02,'post-transition',6,15,'고체','[Xe] 4f¹⁴5d¹⁰6s²6p³',143,703,-91],
+  [84,'Po','폴로늄',209,2.0,'post-transition',6,16,'고체','[Xe] 4f¹⁴5d¹⁰6s²6p⁴',135,812,-183],
+  [85,'At','아스타틴',210,2.2,'halogen',6,17,'고체','[Xe] 4f¹⁴5d¹⁰6s²6p⁵',127,920,-270],
+  [86,'Rn','라돈',222,2.2,'noble',6,18,'기체','[Xe] 4f¹⁴5d¹⁰6s²6p⁶',120,1037,0],
+  [87,'Fr','프랑슘',223,0.7,'alkali',7,1,'고체','[Rn] 7s¹',348,393,-44],
+  [88,'Ra','라듐',226,0.9,'alkaline',7,2,'고체','[Rn] 7s²',283,509,-10],
+  [89,'Ac','악티늄',227,1.1,'actinide',7,3,'고체','[Rn] 6d¹7s²',195,499,-34],
+  [90,'Th','토륨',232.038,1.3,'actinide',7,null,'고체','[Rn] 6d²7s²',180,587,-34],
+  [91,'Pa','프로탁티늄',231.036,1.5,'actinide',7,null,'고체','[Rn] 5f²6d¹7s²',163,568,-34],
+  [92,'U','우라늄',238.029,1.38,'actinide',7,null,'고체','[Rn] 5f³6d¹7s²',156,598,-34],
+  [93,'Np','넵투늄',237,1.36,'actinide',7,null,'고체','[Rn] 5f⁴6d¹7s²',155,605,-34],
+  [94,'Pu','플루토늄',244,1.28,'actinide',7,null,'고체','[Rn] 5f⁶7s²',159,585,-34],
+  [95,'Am','아메리슘',243,1.3,'actinide',7,null,'고체','[Rn] 5f⁷7s²',173,578,-34],
+  [96,'Cm','퀴륨',247,1.3,'actinide',7,null,'고체','[Rn] 5f⁷6d¹7s²',174,581,-34],
+  [97,'Bk','버클륨',247,1.3,'actinide',7,null,'고체','[Rn] 5f⁹7s²',170,601,-34],
+  [98,'Cf','캘리포늄',251,1.3,'actinide',7,null,'고체','[Rn] 5f¹⁰7s²',168,608,-34],
+  [99,'Es','아인슈타이늄',252,1.3,'actinide',7,null,'고체','[Rn] 5f¹¹7s²',165,619,-34],
+  [100,'Fm','페르뮴',257,1.3,'actinide',7,null,'고체','[Rn] 5f¹²7s²',167,627,-34],
+  [101,'Md','멘델레븀',258,1.3,'actinide',7,null,'고체','[Rn] 5f¹³7s²',173,635,-34],
+  [102,'No','노벨륨',259,1.3,'actinide',7,null,'고체','[Rn] 5f¹⁴7s²',176,642,-34],
+  [103,'Lr','로렌슘',266,1.3,'actinide',7,3,'고체','[Rn] 5f¹⁴7s²7p¹',161,479,-34],
+  [104,'Rf','러더포듐',267,null,'transition',7,4,'고체','[Rn] 5f¹⁴6d²7s²',150,580,null],
+  [105,'Db','더브늄',268,null,'transition',7,5,'고체','[Rn] 5f¹⁴6d³7s²',139,null,null],
+  [106,'Sg','시보귬',271,null,'transition',7,6,'고체','[Rn] 5f¹⁴6d⁴7s²',132,null,null],
+  [107,'Bh','보륨',272,null,'transition',7,7,'고체','[Rn] 5f¹⁴6d⁵7s²',128,null,null],
+  [108,'Hs','하슘',277,null,'transition',7,8,'고체','[Rn] 5f¹⁴6d⁶7s²',126,null,null],
+  [109,'Mt','마이트너륨',278,null,'transition',7,9,'고체','[Rn] 5f¹⁴6d⁷7s²',null,null,null],
+  [110,'Ds','다름슈타튬',281,null,'transition',7,10,'고체','[Rn] 5f¹⁴6d⁸7s²',null,null,null],
+  [111,'Rg','뢴트게늄',282,null,'transition',7,11,'고체','[Rn] 5f¹⁴6d¹⁰7s¹',null,null,null],
+  [112,'Cn','코페르니슘',285,null,'transition',7,12,'고체','[Rn] 5f¹⁴6d¹⁰7s²',null,null,null],
+  [113,'Nh','니호늄',286,null,'post-transition',7,13,'고체','[Rn] 5f¹⁴6d¹⁰7s²7p¹',null,null,null],
+  [114,'Fl','플레로븀',289,null,'post-transition',7,14,'고체','[Rn] 5f¹⁴6d¹⁰7s²7p²',null,null,null],
+  [115,'Mc','모스코븀',290,null,'post-transition',7,15,'고체','[Rn] 5f¹⁴6d¹⁰7s²7p³',null,null,null],
+  [116,'Lv','리버모륨',293,null,'post-transition',7,16,'고체','[Rn] 5f¹⁴6d¹⁰7s²7p⁴',null,null,null],
+  [117,'Ts','테네신',294,null,'halogen',7,17,'고체','[Rn] 5f¹⁴6d¹⁰7s²7p⁵',null,null,null],
+  [118,'Og','오가네손',294,null,'noble',7,18,'기체','[Rn] 5f¹⁴6d¹⁰7s²7p⁶',null,null,null],
+];
+
+// Grid positions [col, row] (1-indexed)
+const GRID_POS = {
+  1:[1,1],2:[18,1],
+  3:[1,2],4:[2,2],5:[13,2],6:[14,2],7:[15,2],8:[16,2],9:[17,2],10:[18,2],
+  11:[1,3],12:[2,3],13:[13,3],14:[14,3],15:[15,3],16:[16,3],17:[17,3],18:[18,3],
+  19:[1,4],20:[2,4],21:[3,4],22:[4,4],23:[5,4],24:[6,4],25:[7,4],26:[8,4],27:[9,4],28:[10,4],29:[11,4],30:[12,4],31:[13,4],32:[14,4],33:[15,4],34:[16,4],35:[17,4],36:[18,4],
+  37:[1,5],38:[2,5],39:[3,5],40:[4,5],41:[5,5],42:[6,5],43:[7,5],44:[8,5],45:[9,5],46:[10,5],47:[11,5],48:[12,5],49:[13,5],50:[14,5],51:[15,5],52:[16,5],53:[17,5],54:[18,5],
+  55:[1,6],56:[2,6],57:[3,6],72:[4,6],73:[5,6],74:[6,6],75:[7,6],76:[8,6],77:[9,6],78:[10,6],79:[11,6],80:[12,6],81:[13,6],82:[14,6],83:[15,6],84:[16,6],85:[17,6],86:[18,6],
+  87:[1,7],88:[2,7],89:[3,7],104:[4,7],105:[5,7],106:[6,7],107:[7,7],108:[8,7],109:[9,7],110:[10,7],111:[11,7],112:[12,7],113:[13,7],114:[14,7],115:[15,7],116:[16,7],117:[17,7],118:[18,7],
+  // Lanthanides row 9
+  57:[3,6],58:[4,9],59:[5,9],60:[6,9],61:[7,9],62:[8,9],63:[9,9],64:[10,9],65:[11,9],66:[12,9],67:[13,9],68:[14,9],69:[15,9],70:[16,9],71:[17,9],
+  // Actinides row 10
+  89:[3,7],90:[4,10],91:[5,10],92:[6,10],93:[7,10],94:[8,10],95:[9,10],96:[10,10],97:[11,10],98:[12,10],99:[13,10],100:[14,10],101:[15,10],102:[16,10],103:[17,10],
+};
+// Override lanthanides/actinides positions
+const GRID_OVERRIDE = {
+  57:[3,6],58:[4,9],59:[5,9],60:[6,9],61:[7,9],62:[8,9],63:[9,9],64:[10,9],65:[11,9],66:[12,9],67:[13,9],68:[14,9],69:[15,9],70:[16,9],71:[17,9],
+  89:[3,7],90:[4,10],91:[5,10],92:[6,10],93:[7,10],94:[8,10],95:[9,10],96:[10,10],97:[11,10],98:[12,10],99:[13,10],100:[14,10],101:[15,10],102:[16,10],103:[17,10],
+};
+
+// Molecule data
+const MOLECULES = {
+  'H2O':{name:'물',mw:18.015,polarity:'극성',dipole:'1.85 D',reason:'굽은형 구조 + O의 높은 전기음성도',shape:'굽은형',shapeEn:'Bent',angle:'104.5°',hybrid:'sp³',iforce:'수소결합',composition:{H:11.19,O:88.81}},
+  'CO2':{name:'이산화탄소',mw:44.010,polarity:'무극성',dipole:'0 D',reason:'선형 구조로 쌍극자 모멘트 상쇄',shape:'선형',shapeEn:'Linear',angle:'180°',hybrid:'sp',iforce:'분산력',composition:{C:27.29,O:72.71}},
+  'CH4':{name:'메테인',mw:16.043,polarity:'무극성',dipole:'0 D',reason:'정사면체 대칭 구조',shape:'정사면체형',shapeEn:'Tetrahedral',angle:'109.5°',hybrid:'sp³',iforce:'분산력',composition:{C:74.87,H:25.13}},
+  'NH3':{name:'암모니아',mw:17.031,polarity:'극성',dipole:'1.47 D',reason:'삼각뿔형 구조 + N의 고립 전자쌍',shape:'삼각뿔형',shapeEn:'Trigonal Pyramidal',angle:'107°',hybrid:'sp³',iforce:'수소결합',composition:{N:82.27,H:17.73}},
+  'C6H6':{name:'벤젠',mw:78.113,polarity:'무극성',dipole:'0 D',reason:'고리형 대칭 구조',shape:'육각형 평면',shapeEn:'Hexagonal Planar',angle:'120°',hybrid:'sp²',iforce:'분산력 + π-π 쌓임',composition:{C:92.26,H:7.74}},
+  'HCl':{name:'염화수소',mw:36.461,polarity:'극성',dipole:'1.08 D',reason:'H-Cl 전기음성도 차이',shape:'선형',shapeEn:'Linear',angle:'180°',hybrid:'sp',iforce:'쌍극자-쌍극자',composition:{H:2.76,Cl:97.24}},
+  'H2SO4':{name:'황산',mw:98.079,polarity:'극성',dipole:'2.72 D',reason:'비대칭 구조',shape:'사면체형(S 중심)',shapeEn:'Tetrahedral (S center)',angle:'109°',hybrid:'sp³',iforce:'수소결합',composition:{H:2.06,S:32.69,O:65.25}},
+  'C2H5OH':{name:'에탄올',mw:46.068,polarity:'극성',dipole:'1.69 D',reason:'O-H 결합의 쌍극자',shape:'굽은형(O 중심)',shapeEn:'Bent (O center)',angle:'109°',hybrid:'sp³',iforce:'수소결합',composition:{C:52.14,H:13.13,O:34.73}},
+  'NaCl':{name:'염화나트륨',mw:58.443,polarity:'이온결합',dipole:'9.00 D',reason:'이온결합 화합물',shape:'이온격자',shapeEn:'Ionic Lattice',angle:'-',hybrid:'-',iforce:'이온결합',composition:{Na:39.34,Cl:60.66}},
+  'HNO3':{name:'질산',mw:63.013,polarity:'극성',dipole:'2.17 D',reason:'비대칭 구조',shape:'평면형(N 중심)',shapeEn:'Planar (N center)',angle:'120°',hybrid:'sp²',iforce:'수소결합',composition:{H:1.60,N:22.23,O:76.17}},
+  'O2':{name:'산소',mw:31.998,polarity:'무극성',dipole:'0 D',reason:'동일 원자간 결합',shape:'선형',shapeEn:'Linear',angle:'180°',hybrid:'sp',iforce:'분산력',composition:{O:100}},
+  'N2':{name:'질소',mw:28.014,polarity:'무극성',dipole:'0 D',reason:'동일 원자간 삼중결합',shape:'선형',shapeEn:'Linear',angle:'180°',hybrid:'sp',iforce:'분산력',composition:{N:100}},
+};
+
+// Atomic masses for calculation
+const ATOMIC_MASSES = {H:1.008,He:4.003,Li:6.941,Be:9.012,B:10.811,C:12.011,N:14.007,O:15.999,F:18.998,Ne:20.180,Na:22.990,Mg:24.305,Al:26.982,Si:28.086,P:30.974,S:32.065,Cl:35.453,Ar:39.948,K:39.098,Ca:40.078,Cr:51.996,Mn:54.938,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Br:79.904,I:126.904};
+
+// Ion data
+const IONS = [
+  {sym:'Na⁺',name:'나트륨 이온',charge:+1,type:'cation',element:'Na',atomicR:190,ionicR:102,ec:'[Ne] 2s²2p⁶',ie:495.8,ea:-53,compounds:[{f:'NaCl',n:'염화나트륨(식염)'},{f:'NaOH',n:'수산화나트륨'},{f:'Na2SO4',n:'황산나트륨'},{f:'NaHCO3',n:'탄산수소나트륨'},{f:'Na2CO3',n:'탄산나트륨'}]},
+  {sym:'K⁺',name:'칼륨 이온',charge:+1,type:'cation',element:'K',atomicR:243,ionicR:138,ec:'[Ar] 3s²3p⁶',ie:418.8,ea:-48,compounds:[{f:'KCl',n:'염화칼륨'},{f:'KOH',n:'수산화칼륨'},{f:'K2SO4',n:'황산칼륨'},{f:'KNO3',n:'질산칼륨'}]},
+  {sym:'Ca²⁺',name:'칼슘 이온',charge:+2,type:'cation',element:'Ca',atomicR:194,ionicR:100,ec:'[Ar] 3s²3p⁶',ie:589.8,ea:-2,compounds:[{f:'CaCO3',n:'탄산칼슘(석회석)'},{f:'CaSO4',n:'황산칼슘'},{f:'Ca(OH)2',n:'수산화칼슘'},{f:'CaCl2',n:'염화칼슘'}]},
+  {sym:'Mg²⁺',name:'마그네슘 이온',charge:+2,type:'cation',element:'Mg',atomicR:145,ionicR:72,ec:'[Ne] 2s²2p⁶',ie:737.7,ea:0,compounds:[{f:'MgO',n:'산화마그네슘'},{f:'MgSO4',n:'황산마그네슘'},{f:'MgCl2',n:'염화마그네슘'},{f:'Mg(OH)2',n:'수산화마그네슘'}]},
+  {sym:'Fe²⁺',name:'철(II) 이온',charge:+2,type:'cation',element:'Fe',atomicR:156,ionicR:78,ec:'[Ar] 3d⁶',ie:762.5,ea:-16,compounds:[{f:'FeSO4',n:'황산철(II)'},{f:'FeCl2',n:'염화철(II)'},{f:'FeO',n:'산화철(II)'}]},
+  {sym:'Fe³⁺',name:'철(III) 이온',charge:+3,type:'cation',element:'Fe',atomicR:156,ionicR:64,ec:'[Ar] 3d⁵',ie:2957,ea:-16,compounds:[{f:'Fe2O3',n:'산화철(III,녹)'},{f:'FeCl3',n:'염화철(III)'},{f:'Fe2(SO4)3',n:'황산철(III)'}]},
+  {sym:'Cu²⁺',name:'구리(II) 이온',charge:+2,type:'cation',element:'Cu',atomicR:145,ionicR:73,ec:'[Ar] 3d⁹',ie:745.5,ea:-119,compounds:[{f:'CuSO4',n:'황산구리(II)'},{f:'CuCl2',n:'염화구리(II)'},{f:'Cu(OH)2',n:'수산화구리(II)'}]},
+  {sym:'Al³⁺',name:'알루미늄 이온',charge:+3,type:'cation',element:'Al',atomicR:118,ionicR:54,ec:'[Ne] 2s²2p⁶',ie:577.5,ea:-43,compounds:[{f:'Al2O3',n:'산화알루미늄'},{f:'AlCl3',n:'염화알루미늄'},{f:'Al2(SO4)3',n:'황산알루미늄'}]},
+  {sym:'H⁺',name:'수소 이온(양성자)',charge:+1,type:'cation',element:'H',atomicR:53,ionicR:0,ec:'(없음)',ie:1312,ea:-73,compounds:[{f:'HCl',n:'염산'},{f:'H2SO4',n:'황산'},{f:'HNO3',n:'질산'}]},
+  {sym:'Li⁺',name:'리튬 이온',charge:+1,type:'cation',element:'Li',atomicR:167,ionicR:76,ec:'1s²',ie:520.2,ea:-60,compounds:[{f:'LiCl',n:'염화리튬'},{f:'Li2O',n:'산화리튬'},{f:'LiOH',n:'수산화리튬'}]},
+  {sym:'Zn²⁺',name:'아연 이온',charge:+2,type:'cation',element:'Zn',atomicR:142,ionicR:74,ec:'[Ar] 3d¹⁰',ie:906.4,ea:0,compounds:[{f:'ZnO',n:'산화아연'},{f:'ZnSO4',n:'황산아연'},{f:'ZnCl2',n:'염화아연'}]},
+  {sym:'Ag⁺',name:'은 이온',charge:+1,type:'cation',element:'Ag',atomicR:165,ionicR:115,ec:'[Kr] 4d¹⁰',ie:731.0,ea:-126,compounds:[{f:'AgCl',n:'염화은'},{f:'AgNO3',n:'질산은'},{f:'Ag2O',n:'산화은'}]},
+  {sym:'Ba²⁺',name:'바륨 이온',charge:+2,type:'cation',element:'Ba',atomicR:253,ionicR:136,ec:'[Xe] 5s²5p⁶',ie:502.9,ea:-14,compounds:[{f:'BaSO4',n:'황산바륨'},{f:'BaCl2',n:'염화바륨'},{f:'BaCO3',n:'탄산바륨'}]},
+  {sym:'Pb²⁺',name:'납(II) 이온',charge:+2,type:'cation',element:'Pb',atomicR:154,ionicR:119,ec:'[Xe] 4f¹⁴5d¹⁰6s²',ie:715.6,ea:-35,compounds:[{f:'PbO',n:'산화납(II)'},{f:'PbSO4',n:'황산납'},{f:'PbCl2',n:'염화납(II)'}]},
+  {sym:'Mn²⁺',name:'망가니즈(II) 이온',charge:+2,type:'cation',element:'Mn',atomicR:161,ionicR:83,ec:'[Ar] 3d⁵',ie:717.3,ea:0,compounds:[{f:'MnO2',n:'이산화망가니즈'},{f:'MnSO4',n:'황산망가니즈'},{f:'MnCl2',n:'염화망가니즈'}]},
+  // Anions
+  {sym:'Cl⁻',name:'염화 이온',charge:-1,type:'anion',element:'Cl',atomicR:79,ionicR:181,ec:'[Ne] 3s²3p⁶',ie:1251,ea:-349,compounds:[{f:'NaCl',n:'식염'},{f:'HCl',n:'염산'},{f:'KCl',n:'염화칼륨'}]},
+  {sym:'O²⁻',name:'산화 이온',charge:-2,type:'anion',element:'O',atomicR:48,ionicR:140,ec:'[Ne] 2s²2p⁶',ie:1314,ea:-141,compounds:[{f:'Na2O',n:'산화나트륨'},{f:'MgO',n:'산화마그네슘'},{f:'Al2O3',n:'산화알루미늄'}]},
+  {sym:'S²⁻',name:'황화 이온',charge:-2,type:'anion',element:'S',atomicR:88,ionicR:184,ec:'[Ne] 3s²3p⁶',ie:1000,ea:-200,compounds:[{f:'Na2S',n:'황화나트륨'},{f:'FeS',n:'황화철'},{f:'CuS',n:'황화구리'}]},
+  {sym:'OH⁻',name:'수산화 이온',charge:-1,type:'anion',element:'O',atomicR:48,ionicR:133,ec:'[Ne] 2s²2p⁶(O)',ie:1314,ea:-141,compounds:[{f:'NaOH',n:'수산화나트륨'},{f:'KOH',n:'수산화칼륨'},{f:'Ca(OH)2',n:'수산화칼슘'}]},
+  {sym:'NO₃⁻',name:'질산 이온',charge:-1,type:'anion',element:'N',atomicR:56,ionicR:179,ec:'[He] 2s²2p⁶(N)',ie:1402,ea:-7,compounds:[{f:'NaNO3',n:'질산나트륨'},{f:'KNO3',n:'질산칼륨'},{f:'HNO3',n:'질산'}]},
+  {sym:'SO₄²⁻',name:'황산 이온',charge:-2,type:'anion',element:'S',atomicR:88,ionicR:230,ec:'[Ne] 3s²3p⁶(S)',ie:1000,ea:-200,compounds:[{f:'Na2SO4',n:'황산나트륨'},{f:'H2SO4',n:'황산'},{f:'CaSO4',n:'황산칼슘'}]},
+  {sym:'CO₃²⁻',name:'탄산 이온',charge:-2,type:'anion',element:'C',atomicR:67,ionicR:185,ec:'[He] 2s²2p⁶(C)',ie:1086,ea:-122,compounds:[{f:'Na2CO3',n:'탄산나트륨'},{f:'CaCO3',n:'탄산칼슘'},{f:'K2CO3',n:'탄산칼륨'}]},
+  {sym:'PO₄³⁻',name:'인산 이온',charge:-3,type:'anion',element:'P',atomicR:98,ionicR:238,ec:'[Ne] 3s²3p⁶(P)',ie:1012,ea:-72,compounds:[{f:'Na3PO4',n:'인산나트륨'},{f:'Ca3(PO4)2',n:'인산칼슘'},{f:'H3PO4',n:'인산'}]},
+  {sym:'F⁻',name:'플루오린화 이온',charge:-1,type:'anion',element:'F',atomicR:42,ionicR:133,ec:'[Ne] 2s²2p⁶',ie:1681,ea:-328,compounds:[{f:'NaF',n:'플루오린화나트륨'},{f:'HF',n:'플루오린화수소'},{f:'CaF2',n:'플루오린화칼슘'}]},
+  {sym:'Br⁻',name:'브로민화 이온',charge:-1,type:'anion',element:'Br',atomicR:94,ionicR:196,ec:'[Ar] 3d¹⁰4s²4p⁶',ie:1140,ea:-325,compounds:[{f:'NaBr',n:'브로민화나트륨'},{f:'HBr',n:'브로민화수소'},{f:'KBr',n:'브로민화칼륨'}]},
+  {sym:'I⁻',name:'아이오딘화 이온',charge:-1,type:'anion',element:'I',atomicR:115,ionicR:220,ec:'[Kr] 4d¹⁰5s²5p⁶',ie:1008,ea:-295,compounds:[{f:'NaI',n:'아이오딘화나트륨'},{f:'KI',n:'아이오딘화칼륨'},{f:'HI',n:'아이오딘화수소'}]},
+  {sym:'N³⁻',name:'질화 이온',charge:-3,type:'anion',element:'N',atomicR:56,ionicR:146,ec:'[Ne] 2s²2p⁶',ie:1402,ea:-7,compounds:[{f:'Li3N',n:'질화리튬'},{f:'Mg3N2',n:'질화마그네슘'},{f:'AlN',n:'질화알루미늄'}]},
+  {sym:'MnO₄⁻',name:'과망가니즈산 이온',charge:-1,type:'anion',element:'Mn',atomicR:161,ionicR:240,ec:'[Ar] 3d⁰(Mn)',ie:717,ea:0,compounds:[{f:'KMnO4',n:'과망가니즈산칼륨'},{f:'NaMnO4',n:'과망가니즈산나트륨'}]},
+  {sym:'HCO₃⁻',name:'탄산수소 이온',charge:-1,type:'anion',element:'C',atomicR:67,ionicR:156,ec:'[He] 2s²2p⁶(C)',ie:1086,ea:-122,compounds:[{f:'NaHCO3',n:'탄산수소나트륨(베이킹소다)'},{f:'KHCO3',n:'탄산수소칼륨'},{f:'Ca(HCO3)2',n:'탄산수소칼슘'}]},
+  {sym:'NH₄⁺',name:'암모늄 이온',charge:+1,type:'cation',element:'N',atomicR:56,ionicR:148,ec:'[He] 2s²2p⁶(+H)',ie:1402,ea:-7,compounds:[{f:'NH4Cl',n:'염화암모늄'},{f:'(NH4)2SO4',n:'황산암모늄'},{f:'NH4NO3',n:'질산암모늄'}]},
+  {sym:'HSO₄⁻',name:'황산수소 이온',charge:-1,type:'anion',element:'S',atomicR:88,ionicR:200,ec:'[Ne] 3s²3p⁶(S)',ie:1000,ea:-200,compounds:[{f:'NaHSO4',n:'황산수소나트륨'},{f:'KHSO4',n:'황산수소칼륨'}]},
+];
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goTo(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='periodic') buildPeriodicTable();
+  if(id==='ions') buildIonGrid();
+}
+
+// ============================================================
+// PERIODIC TABLE
+// ============================================================
+let ptMode = 'category';
+
+const CAT_NAMES = {
+  'alkali':'알칼리 금속','alkaline':'알칼리 토금속','transition':'전이 금속',
+  'post-transition':'전이후 금속','metalloid':'준금속','nonmetal':'비금속',
+  'halogen':'할로겐','noble':'비활성 기체','lanthanide':'란타넘족','actinide':'악티늄족'
+};
+const CAT_CSS = {
+  'alkali':'cat-alkali','alkaline':'cat-alkaline','transition':'cat-transition',
+  'post-transition':'cat-post-transition','metalloid':'cat-metalloid','nonmetal':'cat-nonmetal',
+  'halogen':'cat-halogen','noble':'cat-noble','lanthanide':'cat-lanthanide','actinide':'cat-actinide'
+};
+
+function enToColor(en) {
+  if(!en || en === 0) return 'rgba(80,80,120,0.5)';
+  const t = (en - 0.7) / (4.0 - 0.7);
+  const r = Math.round(30 + t * 200);
+  const g = Math.round(100 - t * 70);
+  const b = Math.round(200 - t * 170);
+  return `rgba(${r},${g},${b},0.8)`;
+}
+
+function buildPeriodicTable() {
+  const grid = document.getElementById('pt-grid');
+  if(grid.children.length > 0) return;
+  grid.style.gridTemplateRows = 'repeat(10, 52px)';
+
+  // Add separator rows (rows 8 between main and lanthanides)
+  ELEMENTS.forEach(el => {
+    const [num,sym,name,mass,en,cat,period,group,state,ec,ar] = el;
+    let pos;
+    if(GRID_OVERRIDE[num]) pos = GRID_OVERRIDE[num];
+    else if(group) pos = [group, period];
+    else return;
+    const [col, row] = pos;
+
+    const cell = document.createElement('div');
+    cell.className = 'element-cell ' + (CAT_CSS[cat]||'');
+    cell.style.gridColumn = col;
+    cell.style.gridRow = row;
+    cell.dataset.num = num;
+    cell.innerHTML = `<span class="el-num">${num}</span><span class="el-sym">${sym}</span><span class="el-name">${name}</span><span class="el-mass">${mass}</span>`;
+    cell.onclick = () => openElementModal(num);
+    grid.appendChild(cell);
+  });
+
+  // Lanthanide label
+  const lLabel = document.createElement('div');
+  lLabel.className = 'pt-label';
+  lLabel.style.cssText = 'grid-column:1/3;grid-row:9;font-size:0.6em;color:var(--text3)';
+  lLabel.textContent = '란타넘족';
+  grid.appendChild(lLabel);
+
+  // Actinide label
+  const aLabel = document.createElement('div');
+  aLabel.className = 'pt-label';
+  aLabel.style.cssText = 'grid-column:1/3;grid-row:10;font-size:0.6em;color:var(--text3)';
+  aLabel.textContent = '악티늄족';
+  grid.appendChild(aLabel);
+
+  // La placeholder in row 6
+  const laph = document.createElement('div');
+  laph.style.cssText = 'grid-column:3;grid-row:6;background:var(--card);border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.55em;color:var(--text3)';
+  laph.textContent = '57-71';
+  grid.appendChild(laph);
+
+  const acph = document.createElement('div');
+  acph.style.cssText = 'grid-column:3;grid-row:7;background:var(--card);border:1px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.55em;color:var(--text3)';
+  acph.textContent = '89-103';
+  grid.appendChild(acph);
+}
+
+function setMode(mode) {
+  ptMode = mode;
+  document.querySelectorAll('#periodic .btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+mode).classList.add('active');
+  const grid = document.getElementById('pt-grid');
+
+  if(mode === 'heatmap') {
+    grid.classList.add('heatmap-mode');
+    document.getElementById('pt-legend').innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;font-size:0.8em;color:var(--text2)">
+        전기음성도:
+        <div style="width:200px;height:12px;border-radius:4px;background:linear-gradient(90deg,rgba(30,100,200,0.8),rgba(230,30,30,0.8))"></div>
+        낮음(파랑) → 높음(빨강) &nbsp; 회색=데이터 없음
+      </div>`;
+    grid.querySelectorAll('.element-cell').forEach(cell => {
+      const num = parseInt(cell.dataset.num);
+      const el = ELEMENTS.find(e => e[0]===num);
+      if(el) cell.style.background = enToColor(el[4]);
+    });
+  } else if(mode === 'category') {
+    grid.classList.remove('heatmap-mode');
+    grid.querySelectorAll('.element-cell').forEach(cell => {
+      cell.style.background = '';
+    });
+    document.getElementById('pt-legend').innerHTML = `
+      <div class="legend-item"><div class="legend-dot" style="background:#4a7a1a"></div>알칼리 금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#4a6a20"></div>알칼리 토금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1a4a6a"></div>전이 금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3a3a6a"></div>전이후 금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a5a1a"></div>준금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1a5a5a"></div>비금속</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a1a5a"></div>할로겐</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#6a1a1a"></div>비활성 기체</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a1a4a"></div>란타넘족</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#5a1a3a"></div>악티늄족</div>`;
+  } else {
+    grid.classList.remove('heatmap-mode');
+    grid.querySelectorAll('.element-cell').forEach(cell => {
+      cell.style.background = '';
+      cell.className = cell.className.replace(/cat-\S+/g,'').trim() + ' element-cell';
+    });
+  }
+}
+
+function openElementModal(num) {
+  const el = ELEMENTS.find(e => e[0]===num);
+  if(!el) return;
+  const [n,sym,name,mass,en,cat,period,group,state,ec,ar,ie,eaff] = el;
+  document.getElementById('m-sym').textContent = sym;
+  document.getElementById('m-name').textContent = name;
+  document.getElementById('m-num').textContent = `원자번호 ${n}`;
+  document.getElementById('m-mass').textContent = `${mass} u`;
+  document.getElementById('m-en').textContent = en ? `${en} (폴링 척도)` : '데이터 없음';
+  document.getElementById('m-gp').textContent = `${group ? group+'족' : '-'} / ${period}주기`;
+  document.getElementById('m-state').textContent = state;
+  document.getElementById('m-ec').textContent = ec;
+  document.getElementById('m-cat').textContent = CAT_NAMES[cat] || cat;
+  document.getElementById('m-ar').textContent = ar ? `${ar} pm` : '데이터 없음';
+  document.getElementById('el-modal').classList.add('open');
+}
+function closeModal() { document.getElementById('el-modal').classList.remove('open'); }
+document.getElementById('el-modal').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+
+// ============================================================
+// MOLECULE ANALYZER
+// ============================================================
+function setFormula(f) {
+  document.getElementById('formula-input').value = f;
+  analyzeFormula(f);
+}
+
+function analyzeFormula(raw) {
+  const f = raw.trim().replace(/\s/g,'');
+  if(!f) { showPlaceholder(); return; }
+
+  const data = MOLECULES[f];
+  if(data) {
+    showResults(f, data);
+    return;
+  }
+
+  // Calculate from formula
+  const parsed = parseFormula(f);
+  if(!parsed || Object.keys(parsed).length===0) { showPlaceholder(); return; }
+
+  let mw = 0;
+  for(const [el,cnt] of Object.entries(parsed)) {
+    mw += (ATOMIC_MASSES[el]||0) * cnt;
+  }
+  if(mw===0) { showPlaceholder(); return; }
+
+  const comp = {};
+  for(const [el,cnt] of Object.entries(parsed)) {
+    comp[el] = ((ATOMIC_MASSES[el]||0) * cnt / mw * 100);
+  }
+
+  showResults(f, {
+    name:f, mw:mw, polarity:'분석 필요', dipole:'-', reason:'구조 데이터 없음',
+    shape:'-', shapeEn:'-', angle:'-', hybrid:'-', iforce:'-', composition:comp
+  });
+}
+
+function parseFormula(f) {
+  const result = {};
+  const re = /([A-Z][a-z]?)(\d*)/g;
+  let m;
+  while((m = re.exec(f)) !== null) {
+    if(m[1]) {
+      result[m[1]] = (result[m[1]]||0) + (parseInt(m[2])||1);
+    }
+  }
+  return result;
+}
+
+function showPlaceholder() {
+  document.getElementById('results-placeholder').style.display='block';
+  document.getElementById('results-content').style.display='none';
+}
+
+function showResults(f, d) {
+  document.getElementById('results-placeholder').style.display='none';
+  document.getElementById('results-content').style.display='block';
+
+  document.getElementById('r-mw').textContent = (d.mw||0).toFixed(2);
+  document.getElementById('r-formula').textContent = formatFormula(f);
+  document.getElementById('r-polarity').textContent = d.polarity;
+  document.getElementById('r-polarity').style.color = d.polarity==='극성' ? 'var(--red)' : d.polarity==='무극성' ? 'var(--neon)' : 'var(--orange)';
+  document.getElementById('r-polarity-reason').textContent = d.reason;
+  document.getElementById('r-dipole').textContent = d.dipole;
+  document.getElementById('r-shape').textContent = d.shape;
+  document.getElementById('r-shape-en').textContent = d.shapeEn;
+  document.getElementById('r-angle').textContent = d.angle;
+  document.getElementById('r-hybrid').textContent = d.hybrid;
+  document.getElementById('r-iforce').textContent = d.iforce;
+
+  const COLORS = ['#00ffc8','#4488ff','#ff4466','#ff8833','#aa44ff','#ffdd00'];
+  const compDiv = document.getElementById('r-composition');
+  compDiv.innerHTML = '';
+  Object.entries(d.composition).forEach(([el, pct], i) => {
+    const color = COLORS[i % COLORS.length];
+    compDiv.innerHTML += `<div class="comp-bar">
+      <div class="comp-bar-header"><span>${el}</span><span>${pct.toFixed(2)}%</span></div>
+      <div class="comp-bar-track"><div class="comp-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    </div>`;
+  });
+}
+
+function formatFormula(f) {
+  return f.replace(/(\d+)/g, '<sub>$1</sub>');
+}
+
+// ============================================================
+// 3D VIEWER
+// ============================================================
+let viewer3d = null;
+let currentStyle = 'stick';
+
+function initViewer() {
+  const container = document.getElementById('mol-viewer-container');
+  if(!viewer3d) {
+    viewer3d = $3Dmol.createViewer(container, {
+      backgroundColor: '#0a0e1a',
+      antialias: true,
+    });
+  }
+}
+
+function setViewStyle(style) {
+  currentStyle = style;
+  ['stick','ball','sphere'].forEach(s => document.getElementById('btn-'+s).classList.remove('active'));
+  document.getElementById('btn-'+style).classList.add('active');
+  if(!viewer3d) return;
+  viewer3d.setStyle({}, getStyleObj(style));
+  viewer3d.render();
+}
+
+function getStyleObj(style) {
+  if(style==='ball') return {stick:{radius:0.15,colorscheme:'Jmol'}, sphere:{scale:0.3,colorscheme:'Jmol'}};
+  if(style==='sphere') return {sphere:{colorscheme:'Jmol'}};
+  return {stick:{colorscheme:'Jmol',radius:0.2}};
+}
+
+function loadMolecule() {
+  const name = document.getElementById('viewer-input').value.trim();
+  if(!name) return;
+  loadMoleculeByName(name);
+}
+
+async function loadMoleculeByName(name) {
+  document.getElementById('viewer-input').value = name;
+  document.getElementById('viewer-ph').style.display = 'none';
+  document.getElementById('viewer-loading').style.display = 'block';
+
+  try {
+    initViewer();
+    const url = `https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(name)}/SDF?record_type=3d`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('PubChem 데이터 없음');
+    const sdf = await res.text();
+
+    viewer3d.clear();
+    viewer3d.addModel(sdf, 'sdf');
+    viewer3d.setStyle({}, getStyleObj(currentStyle));
+    viewer3d.zoomTo();
+    viewer3d.render();
+
+    document.getElementById('viewer-loading').style.display = 'none';
+    document.getElementById('viewer-mol-info').innerHTML = `
+      <div style="color:var(--neon);font-weight:600;margin-bottom:6px">${name}</div>
+      <div style="font-size:0.8em;color:var(--text2)">PubChem 3D 구조 로드 완료</div>
+      <div style="font-size:0.78em;color:var(--text3);margin-top:6px">드래그: 회전 | 스크롤: 확대/축소 | 우클릭: 이동</div>`;
+  } catch(e) {
+    document.getElementById('viewer-loading').style.display = 'none';
+    document.getElementById('viewer-ph').style.display = 'block';
+    document.getElementById('viewer-ph').innerHTML = `<div style="color:var(--red)">⚠ 로드 실패<br><small>${e.message}</small></div>`;
+  }
+}
+
+// ============================================================
+// ION TAB
+// ============================================================
+let selectedIon = null;
+let ionFilter = 'all';
+let ionViewerInstance = null;
+let showNeutral = false;
+
+function buildIonGrid() {
+  const grid = document.getElementById('ion-grid');
+  if(grid.children.length > 0 && grid.dataset.filter === ionFilter) return;
+  grid.dataset.filter = ionFilter;
+  grid.innerHTML = '';
+
+  const filtered = IONS.filter(ion => ionFilter==='all' || ion.type===ionFilter);
+  filtered.forEach((ion, i) => {
+    const change = ((ion.ionicR - ion.atomicR) / ion.atomicR * 100).toFixed(1);
+    const isIncrease = ion.ionicR > ion.atomicR;
+    const card = document.createElement('div');
+    card.className = `ion-card ${ion.type}`;
+    card.innerHTML = `
+      <div class="ion-symbol">${ion.sym}</div>
+      <div style="font-size:0.78em;color:var(--text2)">${ion.name}</div>
+      <div class="ion-radius-row">
+        <span>이온 반지름: ${ion.ionicR} pm</span>
+      </div>
+      <div style="margin-top:6px">
+        <span class="ion-change ${isIncrease?'change-increase':'change-decrease'}">
+          ${isIncrease?'↑':'↓'} ${Math.abs(change)}%
+        </span>
+      </div>`;
+    card.onclick = () => selectIon(ion);
+    grid.appendChild(card);
+  });
+}
+
+function filterIons(f) {
+  ionFilter = f;
+  ['all','cation','anion'].forEach(t => document.getElementById('ion-filter-'+t).classList.remove('active'));
+  document.getElementById('ion-filter-'+f).classList.add('active');
+  document.getElementById('ion-grid').dataset.filter = '';
+  buildIonGrid();
+}
+
+function selectIon(ion) {
+  selectedIon = ion;
+  document.querySelectorAll('.ion-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  renderIonDetail(ion);
+}
+
+function renderIonDetail(ion) {
+  const detail = document.getElementById('ion-detail');
+  const change = ((ion.ionicR - ion.atomicR) / ion.atomicR * 100).toFixed(1);
+  const isInc = ion.ionicR > ion.atomicR;
+  const trendText = ion.type==='cation'
+    ? '양이온은 전자를 잃어 전자껍질이 줄거나 핵 인력이 증가하여 반지름이 감소합니다.'
+    : '음이온은 전자를 얻어 전자-전자 반발이 증가하여 반지름이 증가합니다.';
+
+  detail.innerHTML = `
+    <div class="ion-detail-sym" style="color:${ion.type==='cation'?'#ff6688':'#6688ff'}">${ion.sym}</div>
+    <div style="text-align:center;color:var(--text2);font-size:0.9em;margin-bottom:16px">${ion.name}</div>
+    <div id="ion-viewer-container"></div>
+    <div class="ion-toggle-row">
+      <span class="toggle-label">중성 원자</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="ion-toggle" onchange="toggleIonState(this.checked)">
+        <div class="toggle-slider"></div>
+      </label>
+      <span class="toggle-label">이온 상태</span>
+    </div>
+    <div class="ion-detail-grid">
+      <div class="ion-detail-item"><label>전하</label><span>${ion.charge > 0 ? '+'+ion.charge : ion.charge}</span></div>
+      <div class="ion-detail-item"><label>이온 반지름</label><span>${ion.ionicR} pm</span></div>
+      <div class="ion-detail-item"><label>원자 반지름</label><span>${ion.atomicR} pm</span></div>
+      <div class="ion-detail-item"><label>반지름 변화</label><span style="color:${isInc?'#4466ff':'#ff4466'}">${isInc?'↑ 증가':'↓ 감소'} (${Math.abs(change)}%)</span></div>
+      <div class="ion-detail-item" style="grid-column:1/-1"><label>전자 배치</label><span>${ion.ec}</span></div>
+      <div class="ion-detail-item"><label>이온화 에너지</label><span>${ion.ie} kJ/mol</span></div>
+      <div class="ion-detail-item"><label>전자 친화도</label><span>${ion.ea} kJ/mol</span></div>
+    </div>
+    <div style="background:var(--bg);border-radius:8px;padding:10px;font-size:0.8em;color:var(--text2);margin-bottom:12px">${trendText}</div>
+    <div class="section-title">관련 화합물</div>
+    <div class="compounds-list">
+      ${ion.compounds.map(c => `
+        <div class="compound-item" onclick="goToAnalyzer('${c.f}')">
+          <span class="compound-formula">${formatFormula(c.f)}</span>
+          <span class="compound-name">${c.n}</span>
+        </div>`).join('')}
+    </div>`;
+
+  showNeutral = false;
+  document.getElementById('ion-toggle').checked = false;
+  renderIonViewer(ion, false);
+}
+
+function toggleIonState(isIon) {
+  showNeutral = !isIon;
+  if(selectedIon) renderIonViewer(selectedIon, isIon);
+}
+
+function renderIonViewer(ion, isIon) {
+  const container = document.getElementById('ion-viewer-container');
+  if(!container) return;
+  container.innerHTML = '';
+
+  const viewer = $3Dmol.createViewer(container, {backgroundColor:'#0a0e1a'});
+  ionViewerInstance = viewer;
+
+  const isCation = ion.type === 'cation';
+  const radius = isIon ? ion.ionicR : ion.atomicR;
+  const shellColor = isCation ? {r:255,g:80,b:80} : {r:80,g:120,b:255};
+
+  // Nucleus
+  const nucColor = {H:'#ffffff',He:'#d9ffff',Li:'#cc80ff',Be:'#c2ff00',B:'#ffb5b5',C:'#909090',N:'#3050f8',O:'#ff0d0d',F:'#90e050',Ne:'#b3e3f5',Na:'#ab5cf2',Mg:'#8aff00',Al:'#bfa6a6',Si:'#f0c8a0',P:'#ff8000',S:'#ffff30',Cl:'#1ff01f',Ar:'#80d1e3',K:'#8f40d4',Ca:'#3dff00',Fe:'#e06633',Cu:'#c88033',Zn:'#7d80b0',Mn:'#9c7ac7'};
+  const nColor = nucColor[ion.element] || '#aaaaaa';
+
+  viewer.addSphere({center:{x:0,y:0,z:0}, radius:0.3, color:nColor, opacity:1.0});
+
+  // Electron shells based on radius
+  const shells = isIon ? getIonShells(ion) : getNeutralShells(ion);
+  shells.forEach((shell, i) => {
+    const opacity = 0.15 - i * 0.03;
+    const scale = shell.relRadius * radius / 150;
+    viewer.addSphere({
+      center:{x:0,y:0,z:0},
+      radius: Math.max(0.3 + scale, 0.4 + i * 0.3),
+      color: `rgb(${shellColor.r},${shellColor.g},${shellColor.b})`,
+      opacity: Math.max(opacity, 0.05),
+      wireframe: false,
+    });
+  });
+
+  viewer.zoomTo();
+  viewer.zoom(0.7);
+  viewer.render();
+}
+
+function getIonShells(ion) {
+  const ec = ion.ec;
+  const shells = [];
+  if(ec.includes('7s')) shells.push({relRadius:1.0},{relRadius:0.8},{relRadius:0.6},{relRadius:0.4},{relRadius:0.25},{relRadius:0.15},{relRadius:0.08});
+  else if(ec.includes('6s')||ec.includes('5d')||ec.includes('4f')) shells.push({relRadius:1.0},{relRadius:0.75},{relRadius:0.5},{relRadius:0.3},{relRadius:0.18},{relRadius:0.1});
+  else if(ec.includes('5s')||ec.includes('4d')) shells.push({relRadius:1.0},{relRadius:0.7},{relRadius:0.45},{relRadius:0.25},{relRadius:0.12});
+  else if(ec.includes('4s')||ec.includes('3d')) shells.push({relRadius:1.0},{relRadius:0.65},{relRadius:0.38},{relRadius:0.2});
+  else if(ec.includes('3s')||ec.includes('2p')) shells.push({relRadius:1.0},{relRadius:0.55},{relRadius:0.28});
+  else if(ec.includes('2s')) shells.push({relRadius:1.0},{relRadius:0.5});
+  else shells.push({relRadius:1.0});
+  return shells;
+}
+
+function getNeutralShells(ion) {
+  const el = ELEMENTS.find(e => e[1]===ion.element);
+  if(!el) return getIonShells(ion);
+  const period = el[6];
+  const shells = [];
+  for(let i=0;i<period;i++) shells.push({relRadius:(i+1)/period});
+  return shells.reverse();
+}
+
+function goToAnalyzer(formula) {
+  goTo('analyzer');
+  setFormula(formula);
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('main').classList.add('active');
+});
+</script>
+</body>
+</html>
