@@ -401,7 +401,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
           <input type="text" class="formula-input" id="viewer-input" placeholder="예: aspirin, dopamine"
             aria-label="분자명 입력" style="font-size:0.95em" onkeydown="if(event.key==='Enter')loadMolecule()">
         </div>
-        <button class="analyze-btn" onclick="loadMolecule()" style="margin-bottom:16px">3D 구조 불러오기</button>
+        <button class="analyze-btn" onclick="loadMolecule()" style="margin-bottom:10px">3D 구조 불러오기</button>
+        <div id="viewer-name-error" style="display:none;color:var(--red);font-size:0.85em;padding:9px 13px;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.35);border-radius:8px;margin-bottom:12px;line-height:1.5"></div>
 
         <div class="mol-category">
           <div class="mol-category-title">💧 무기 화합물</div>
@@ -1033,15 +1034,20 @@ function lm(rawName){
     if(currentStyle!=='ball') setViewStyle('ball');
     renderAtomLegend(lastAtomSyms);
   };
+  const nameErr=document.getElementById('viewer-name-error');
+  if(nameErr) nameErr.style.display='none';
   try{const c=sessionStorage.getItem(cacheKey);if(c){applyMol(c);return;}}catch(e){}
   fetch(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/${encodeURIComponent(name)}/SDF?record_type=3d`)
-    .then(r=>{if(!r.ok)throw new Error('3D 구조 없음');return r.text();})
+    .then(r=>{if(r.status===404)throw new Error('NOTFOUND');if(!r.ok)throw new Error('서버 오류 ('+r.status+')');return r.text();})
     .then(sdf=>{try{sessionStorage.setItem(cacheKey,sdf);}catch(e){}applyMol(sdf);})
     .catch(e=>{
       document.getElementById('viewer-loading').style.display='none';
       document.getElementById('viewer-ph').style.display='block';
+      const isNotFound=e.message==='NOTFOUND';
+      const displayErr=isNotFound?`"${rawName}" 분자를 찾을 수 없습니다<br><span style="font-size:0.88em;color:var(--text3)">영문명(aspirin, caffeine) 또는 화학식(H2O)을 사용하세요</span>`:e.message+'<br>잠시 후 다시 시도해보세요';
+      if(nameErr){nameErr.style.display='block';nameErr.innerHTML='⚠ '+displayErr;}
       const rn=rawName.replace(/"/g,'&quot;');
-      document.getElementById('viewer-ph').innerHTML=`<div style="color:var(--red);font-size:1.1em">⚠ 로드 실패</div><div style="font-size:0.82em;color:var(--text3);margin-top:6px">${e.message}<br>다른 분자명을 시도해보세요</div><button class="btn" style="margin-top:10px;min-height:38px" onclick="lm('${rn}')">↺ 다시 시도</button>`;
+      document.getElementById('viewer-ph').innerHTML=`<div class="icon" style="color:var(--red)">⚠</div><div style="color:var(--red);margin-bottom:8px">${isNotFound?'"'+rawName+'" 을(를) 찾을 수 없습니다':'로드 실패'}</div><div style="font-size:0.8em;color:var(--text3)">${isNotFound?'다른 분자명으로 시도해보세요':e.message}</div><button class="btn" style="margin-top:12px;min-height:38px" onclick="lm('${rn}')">↺ 다시 시도</button>`;
     });
 }
 
