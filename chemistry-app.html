@@ -848,12 +848,53 @@ function getStyleObj(style){
   if(style==='sphere') return {sphere:{colorscheme:'Jmol'}};
   return {stick:{colorscheme:'Jmol',radius:0.18}};
 }
+// Korean → English/PubChem name mapping
+const KO_MOL={
+  '물':'water','수소':'hydrogen','산소':'oxygen','질소':'nitrogen','탄소':'carbon',
+  '이산화탄소':'carbon dioxide','일산화탄소':'carbon monoxide',
+  '암모니아':'ammonia','메테인':'methane','에테인':'ethane','프로페인':'propane','뷰테인':'butane',
+  '메탄':'methane','에탄':'ethane','프로판':'propane','부탄':'butane',
+  '에틸렌':'ethylene','에텐':'ethylene','아세틸렌':'acetylene','에타인':'acetylene',
+  '벤젠':'benzene','톨루엔':'toluene','나프탈렌':'naphthalene','사이클로헥세인':'cyclohexane','사이클로헥산':'cyclohexane',
+  '염화수소':'hydrogen chloride','염산':'hydrochloric acid',
+  '황산':'sulfuric acid','질산':'nitric acid','인산':'phosphoric acid',
+  '수산화나트륨':'sodium hydroxide','수산화칼슘':'calcium hydroxide','수산화칼륨':'potassium hydroxide',
+  '염화나트륨':'sodium chloride','식염':'sodium chloride',
+  '과산화수소':'hydrogen peroxide',
+  '이산화황':'sulfur dioxide','삼산화황':'sulfur trioxide',
+  '이산화질소':'nitrogen dioxide','일산화질소':'nitric oxide',
+  '에탄올':'ethanol','메탄올':'methanol','아이소프로판올':'isopropanol','이소프로판올':'isopropanol',
+  '아세트산':'acetic acid','초산':'acetic acid','폼산':'formic acid','개미산':'formic acid',
+  '아세톤':'acetone','폼알데하이드':'formaldehyde','포름알데히드':'formaldehyde',
+  '글리세롤':'glycerol','글리세린':'glycerol',
+  '요소':'urea','포도당':'glucose','과당':'fructose','자당':'sucrose',
+  '아데닌':'adenine','구아닌':'guanine','사이토신':'cytosine','타이민':'thymine','우라실':'uracil',
+  '콜레스테롤':'cholesterol','알라닌':'alanine','글리신':'glycine','세린':'serine',
+  '카페인':'caffeine','아스피린':'aspirin','이부프로펜':'ibuprofen','타이레놀':'acetaminophen','파라세타몰':'paracetamol',
+  '도파민':'dopamine','세로토닌':'serotonin','니코틴':'nicotine','비타민c':'vitamin c','비타민씨':'vitamin c',
+  '페니실린':'penicillin','모르핀':'morphine',
+  '소금':'sodium chloride','석회수':'calcium hydroxide',
+  '산화철':'iron oxide','산화구리':'copper oxide','산화알루미늄':'aluminum oxide',
+  '탄산칼슘':'calcium carbonate','탄산나트륨':'sodium carbonate','탄산수소나트륨':'sodium bicarbonate',
+  '황산구리':'copper sulfate','황산나트륨':'sodium sulfate',
+  'H2O':'water','CO2':'carbon dioxide','CH4':'methane','NH3':'ammonia',
+  'C6H6':'benzene','HCl':'hydrogen chloride','H2SO4':'sulfuric acid','HNO3':'nitric acid',
+  'H2O2':'hydrogen peroxide','SO2':'sulfur dioxide','NO2':'nitrogen dioxide',
+  'NaCl':'sodium chloride','C2H5OH':'ethanol','CH3OH':'methanol','C2H6':'ethane',
+  'C3H8':'propane','C4H10':'butane','C2H4':'ethylene','C2H2':'acetylene',
+};
+function translateKo(name){
+  const lower=name.trim().toLowerCase();
+  return KO_MOL[lower]||KO_MOL[name.trim()]||name.trim();
+}
+
 function loadMolecule(){
   const name=document.getElementById('viewer-input').value.trim();
   if(name) lm(name);
 }
-function lm(name){
-  document.getElementById('viewer-input').value=name;
+function lm(rawName){
+  const name=translateKo(rawName);
+  document.getElementById('viewer-input').value=rawName;
   document.getElementById('viewer-ph').style.display='none';
   document.getElementById('viewer-loading').style.display='block';
   initViewer();
@@ -866,7 +907,8 @@ function lm(name){
       viewer3d.zoomTo();
       viewer3d.render();
       document.getElementById('viewer-loading').style.display='none';
-      document.getElementById('viewer-mol-info').innerHTML=`<div style="color:var(--neon);font-weight:600;margin-bottom:6px">${name}</div><div style="color:var(--text2)">PubChem 3D 구조 로드 완료</div><div style="color:var(--text3);margin-top:6px;font-size:0.9em">드래그: 회전 | 스크롤: 확대/축소 | 우클릭: 이동</div>`;
+      const displayName=rawName!==name?`${rawName} <span style="color:var(--text3);font-size:0.8em">(${name})</span>`:rawName;
+      document.getElementById('viewer-mol-info').innerHTML=`<div style="color:var(--neon);font-weight:600;margin-bottom:6px">${displayName}</div><div style="color:var(--text2)">PubChem 3D 구조 로드 완료</div><div style="color:var(--text3);margin-top:6px;font-size:0.9em">드래그: 회전 | 스크롤: 확대/축소 | 우클릭: 이동</div>`;
     })
     .catch(e=>{
       document.getElementById('viewer-loading').style.display='none';
