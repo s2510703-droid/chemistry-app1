@@ -869,21 +869,14 @@ const CPK_COLORS={
 
 // SDF 파일에서 원소 기호 추출
 function parseSdfAtoms(sdf){
-  const lines=sdf.split('\n');
-  let countLine='';
-  for(let i=0;i<lines.length;i++){
-    if(lines[i].match(/^\s*\d+\s+\d+/)){countLine=lines[i];break;}
-  }
-  const atomCount=parseInt(countLine.trim().split(/\s+/)[0])||0;
-  const startIdx=lines.findIndex(l=>l.match(/^\s*\d+\s+\d+/))+1;
   const seen=new Set();
-  for(let i=startIdx;i<startIdx+atomCount&&i<lines.length;i++){
-    const parts=lines[i].trim().split(/\s+/);
-    if(parts.length>=4){
-      const sym=parts[3];
-      if(/^[A-Z][a-z]?$/.test(sym)) seen.add(sym);
-    }
-  }
+  // V2000: 원자 줄 = 소수점 세 개 + 원소기호 패턴
+  const re=/^\s*-?\d+\.\d+\s+-?\d+\.\d+\s+-?\d+\.\d+\s+([A-Z][a-z]?)\s/gm;
+  let m;
+  while((m=re.exec(sdf))!==null) seen.add(m[1]);
+  // V3000 형식도 처리
+  const re3=/M\s+V30\s+\d+\s+([A-Z][a-z]?)\s/g;
+  while((m=re3.exec(sdf))!==null) seen.add(m[1]);
   return [...seen];
 }
 
@@ -987,8 +980,9 @@ function lm(rawName){
       document.getElementById('viewer-loading').style.display='none';
       const displayName=rawName!==name?`${rawName} <span style="color:var(--text3);font-size:0.8em">(${name})</span>`:rawName;
       document.getElementById('viewer-mol-info').innerHTML=`<div style="color:var(--neon);font-weight:600;margin-bottom:6px">${displayName}</div><div style="color:var(--text2)">PubChem 3D 구조 로드 완료</div><div style="color:var(--text3);margin-top:6px;font-size:0.9em">드래그: 회전 | 스크롤: 확대/축소 | 우클릭: 이동</div>`;
-      // 원소 범례 업데이트
+      // 원소 범례 업데이트 (Ball & Stick 모드로 자동 전환)
       lastAtomSyms=parseSdfAtoms(sdf);
+      if(currentStyle!=='ball') setViewStyle('ball');
       renderAtomLegend(lastAtomSyms);
     })
     .catch(e=>{
