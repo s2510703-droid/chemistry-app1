@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>화학 교육 플랫폼</title>
 <script src="https://3dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -228,6 +229,51 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
   .analyzer-layout,.viewer-layout,.ion-layout{grid-template-columns:1fr}
   .result-cards{grid-template-columns:1fr 1fr}
 }
+/* ===== SIMULATOR ===== */
+.sim-eq-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.sim-eq-input{flex:1;min-width:200px;background:var(--bg);border:2px solid var(--border);color:var(--text);
+  padding:11px 15px;border-radius:10px;font-size:1em;font-family:inherit;outline:none;transition:border-color 0.2s}
+.sim-eq-input:focus{border-color:var(--neon)}
+.sim-sbtn{background:var(--card2);border:1px solid var(--border);color:var(--text2);
+  padding:11px 16px;border-radius:10px;cursor:pointer;font-size:0.87em;white-space:nowrap;transition:all 0.2s;min-height:44px}
+.sim-sbtn:hover{border-color:var(--neon);color:var(--neon)}
+.sim-sbtn.primary{background:var(--neon);color:#000;border-color:var(--neon);font-weight:700}
+.sim-sbtn.primary:hover{background:var(--neon3);box-shadow:0 0 18px rgba(0,255,200,0.4)}
+.sim-presets{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px}
+.sim-pbtn{background:var(--bg);border:1px solid var(--border);color:var(--text2);
+  padding:7px 12px;border-radius:8px;cursor:pointer;font-size:0.82em;transition:all 0.2s}
+.sim-pbtn:hover{border-color:var(--neon);color:var(--neon)}
+.sim-pbtn.active{background:var(--neon);color:#000;border-color:var(--neon);font-weight:600}
+.sim-canvas-wrap{background:#050a14;border:1px solid var(--border);border-radius:12px;margin-bottom:18px;overflow:hidden}
+#sim-canvas{display:block;width:100%}
+.sim-canvas-bar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-top:1px solid var(--border);background:rgba(0,0,0,0.35)}
+.sim-status{flex:1;font-size:0.82em;color:var(--text2)}
+.sim-charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.sim-cpanel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px}
+.sim-chart-title{font-size:0.88em;font-weight:600;color:var(--neon);margin-bottom:10px}
+.sim-chart-note{font-size:0.78em;color:var(--text2);margin-top:8px;text-align:center}
+.sim-canvas-h{position:relative;height:175px}
+.sim-cond-panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:18px}
+.sim-cond-title{font-size:0.9em;font-weight:600;color:var(--neon);margin-bottom:14px}
+.sim-cond-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.sim-cond-item>label{font-size:0.78em;color:var(--text3);display:block;margin-bottom:6px}
+.sim-cond-item input[type=range]{width:100%;accent-color:var(--neon);margin-bottom:3px}
+.sim-cond-item .cv{font-size:0.85em;color:var(--text2)}
+.sim-cat-row{display:flex;align-items:center;gap:10px;margin-top:6px}
+.sim-info-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:8px}
+.sim-icard{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px}
+.sim-icard>label{font-size:0.67em;color:var(--text3);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px}
+.sim-icard>.v{font-size:0.84em;font-weight:500}
+.sim-err{display:none;color:var(--red);font-size:0.84em;padding:8px 12px;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.3);border-radius:8px;margin-bottom:10px}
+@media(max-width:900px){
+  .sim-charts-row{grid-template-columns:1fr}
+  .sim-info-row{grid-template-columns:repeat(2,1fr)}
+  .sim-cond-row{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  .sim-cond-row{grid-template-columns:1fr}
+  .sim-info-row{grid-template-columns:1fr 1fr}
+}
 @media(max-width:768px){
   .sidebar{display:none}
   .pt-wrapper{-webkit-overflow-scrolling:touch}
@@ -278,6 +324,83 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe 
       <div class="icon">⚡</div>
       <h2>이온 탐색기</h2>
       <p>30+ 이온의 3D 전자구름 시각화<br>이온화 에너지 & 화합물 예시</p>
+    </div>
+    <div class="main-card" onclick="goTo('simulator')" style="grid-column:1/-1">
+      <div class="icon">🧪</div>
+      <h2>화학 반응 시뮬레이터</h2>
+      <p>6가지 반응의 Canvas 애니메이션 · 에너지 다이어그램 · 농도-시간 그래프<br>온도/촉매/압력 슬라이더로 반응 조건 변화 실시간 관찰</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SIMULATOR ===== -->
+<div id="simulator" class="page">
+  <div class="page-header">
+    <button class="back-btn" onclick="goTo('main')" aria-label="메인으로">← 메인</button>
+    <span class="page-title">화학 반응 시뮬레이터</span>
+  </div>
+  <div class="container">
+    <div class="sim-err" id="sim-err"></div>
+    <div class="sim-eq-row">
+      <input type="text" class="sim-eq-input" id="sim-eq-input" placeholder="예: CH4 + 2O2 -> CO2 + 2H2O  또는  H2 + O2 -> H2O" aria-label="반응식 입력">
+      <button class="sim-sbtn" onclick="doBalance()">⚖ 균형 맞추기</button>
+      <button class="sim-sbtn primary" onclick="startSim()">▶ 시뮬레이션 시작</button>
+    </div>
+    <div class="sim-presets">
+      <button class="sim-pbtn active" data-rxn="h2burn"   onclick="selectSimRxn('h2burn')">💧 수소 연소</button>
+      <button class="sim-pbtn"        data-rxn="ch4burn"  onclick="selectSimRxn('ch4burn')">🔥 메탄 연소</button>
+      <button class="sim-pbtn"        data-rxn="neutral"  onclick="selectSimRxn('neutral')">⚗ 중화 반응</button>
+      <button class="sim-pbtn"        data-rxn="displace" onclick="selectSimRxn('displace')">⚙ 치환 반응</button>
+      <button class="sim-pbtn"        data-rxn="ammonia"  onclick="selectSimRxn('ammonia')">🌿 암모니아 합성</button>
+      <button class="sim-pbtn"        data-rxn="h2o2"     onclick="selectSimRxn('h2o2')">🧪 H₂O₂ 분해</button>
+    </div>
+    <div class="sim-canvas-wrap">
+      <canvas id="sim-canvas" height="260"></canvas>
+      <div class="sim-canvas-bar">
+        <span class="sim-status" id="sim-status">반응 대기 중…</span>
+        <button class="sim-sbtn" id="btn-sim-pause" onclick="pauseSim()" style="padding:6px 12px;min-height:34px;font-size:0.82em">⏸ 일시정지</button>
+        <button class="sim-sbtn" onclick="resetSim()" style="padding:6px 12px;min-height:34px;font-size:0.82em">⏮ 처음으로</button>
+      </div>
+    </div>
+    <div class="sim-charts-row">
+      <div class="sim-cpanel">
+        <div class="sim-chart-title">⚡ 에너지 다이어그램</div>
+        <div class="sim-canvas-h"><canvas id="sim-e-canvas"></canvas></div>
+        <div class="sim-chart-note" id="sim-e-note"></div>
+      </div>
+      <div class="sim-cpanel">
+        <div class="sim-chart-title">📈 농도-시간 그래프</div>
+        <div class="sim-canvas-h"><canvas id="sim-c-canvas"></canvas></div>
+      </div>
+    </div>
+    <div class="sim-cond-panel">
+      <div class="sim-cond-title">🔧 반응 조건</div>
+      <div class="sim-cond-row">
+        <div class="sim-cond-item">
+          <label>온도 (0 ~ 500°C)</label>
+          <input type="range" id="sim-temp" min="0" max="500" value="25" step="5">
+          <div class="cv" id="sim-temp-v">25 °C</div>
+        </div>
+        <div class="sim-cond-item">
+          <label>압력 (기체 반응, 0.1 ~ 10 atm)</label>
+          <input type="range" id="sim-press" min="1" max="100" value="10" step="1">
+          <div class="cv" id="sim-press-v">1.0 atm</div>
+        </div>
+        <div class="sim-cond-item">
+          <label>촉매</label>
+          <div class="sim-cat-row">
+            <label class="toggle-switch"><input type="checkbox" id="sim-cat"><div class="toggle-slider"></div></label>
+            <span style="font-size:0.84em;color:var(--text2)">ON = Ea 크게 감소</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sim-info-row">
+      <div class="sim-icard"><label>반응 유형</label><div class="v" id="si-type">-</div></div>
+      <div class="sim-icard"><label>열화학</label><div class="v" id="si-thermo">-</div></div>
+      <div class="sim-icard"><label>활성화 에너지</label><div class="v" id="si-ea">-</div></div>
+      <div class="sim-icard"><label>반응 조건</label><div class="v" id="si-cond">-</div></div>
+      <div class="sim-icard"><label>실생활 예시</label><div class="v" id="si-ex">-</div></div>
     </div>
   </div>
 </div>
@@ -735,10 +858,11 @@ const NUCCOLORS={H:'#ffffff',He:'#d9ffff',Li:'#cc80ff',Be:'#c2ff00',B:'#ffb5b5',
 // NAVIGATION
 // ============================================================
 const NAV_ITEMS=[
-  {id:'periodic',icon:'🔬',label:'원소 주기율표'},
-  {id:'analyzer',icon:'⚗',label:'분자 분석기'},
-  {id:'viewer',icon:'🧬',label:'3D 분자 뷰어'},
-  {id:'ions',icon:'⚡',label:'이온 탐색기'},
+  {id:'periodic',  icon:'🔬',label:'원소 주기율표'},
+  {id:'analyzer',  icon:'⚗', label:'분자 분석기'},
+  {id:'viewer',    icon:'🧬',label:'3D 분자 뷰어'},
+  {id:'ions',      icon:'⚡',label:'이온 탐색기'},
+  {id:'simulator', icon:'🧪',label:'반응 시뮬레이터'},
 ];
 
 function goTo(id){
@@ -754,6 +878,7 @@ function goTo(id){
   });
   if(id==='periodic') buildPeriodicTable();
   if(id==='ions') buildIonGrid();
+  if(id==='simulator') setTimeout(onSimShow, 60);
 }
 
 function initSidebars(){
@@ -1257,6 +1382,448 @@ function getShellCount(sym){
 function goToAnalyzer(formula){
   goTo('analyzer');
   setFormula(formula);
+}
+
+// ============================================================
+// SIMULATOR
+// ============================================================
+const SIM_RXNS=[
+  {id:'h2burn', label:'수소 연소',   eq:'2H₂ + O₂ → 2H₂O',
+   type:'연소 반응', reversible:false, exo:true,  dH:-484, Ea:270, Ea_cat:40,
+   gasPhase:true,  cond:'점화 또는 Pt 촉매', ex:'수소 연료전지, 로켓 추진',
+   react:[{f:'H2',c:2},{f:'O2',c:1}], prod:[{f:'H2O',c:2}], c0:{H2:2,O2:1}, Keq:null},
+  {id:'ch4burn',label:'메탄 연소',   eq:'CH₄ + 2O₂ → CO₂ + 2H₂O',
+   type:'연소 반응', reversible:false, exo:true,  dH:-890, Ea:210, Ea_cat:60,
+   gasPhase:true,  cond:'점화',           ex:'가스레인지, 천연가스 발전',
+   react:[{f:'CH4',c:1},{f:'O2',c:2}], prod:[{f:'CO2',c:1},{f:'H2O',c:2}], c0:{CH4:1,O2:2}, Keq:null},
+  {id:'neutral', label:'중화 반응',  eq:'HCl + NaOH → NaCl + H₂O',
+   type:'중화 반응', reversible:false, exo:true,  dH:-57,  Ea:20,  Ea_cat:5,
+   gasPhase:false, cond:'수용액',          ex:'제산제, 산성 토양 중화',
+   react:[{f:'HCl',c:1},{f:'NaOH',c:1}], prod:[{f:'NaCl',c:1},{f:'H2O',c:1}], c0:{HCl:1,NaOH:1}, Keq:null},
+  {id:'displace',label:'치환 반응',  eq:'Fe + CuSO₄ → FeSO₄ + Cu',
+   type:'산화환원 반응', reversible:false, exo:true, dH:-153, Ea:85, Ea_cat:30,
+   gasPhase:false, cond:'수용액',          ex:'구리 도금, 금속 정련',
+   react:[{f:'Fe',c:1},{f:'CuSO4',c:1}], prod:[{f:'FeSO4',c:1},{f:'Cu',c:1}], c0:{Fe:1,CuSO4:1}, Keq:null},
+  {id:'ammonia', label:'암모니아 합성', eq:'N₂ + 3H₂ ⇌ 2NH₃',
+   type:'합성 반응 (가역)', reversible:true, exo:true, dH:-92, Ea:230, Ea_cat:80,
+   gasPhase:true,  cond:'Fe 촉매, 450°C, 200 atm', ex:'비료 제조, 하버-보슈법',
+   react:[{f:'N2',c:1},{f:'H2',c:3}], prod:[{f:'NH3',c:2}], c0:{N2:1,H2:3}, Keq:0.5},
+  {id:'h2o2',   label:'H₂O₂ 분해', eq:'2H₂O₂ → 2H₂O + O₂',
+   type:'분해 반응', reversible:false, exo:true,  dH:-196, Ea:75,  Ea_cat:25,
+   gasPhase:false, cond:'MnO₂ 또는 KI',  ex:'상처 소독, 로켓 추진제',
+   react:[{f:'H2O2',c:2}], prod:[{f:'H2O',c:2},{f:'O2',c:1}], c0:{H2O2:2}, Keq:null},
+];
+
+const SIM_ATOMS={
+  H2:  [{e:'H',x:-14,y:0},{e:'H',x:14,y:0}],
+  O2:  [{e:'O',x:-14,y:0},{e:'O',x:14,y:0}],
+  N2:  [{e:'N',x:-14,y:0},{e:'N',x:14,y:0}],
+  H2O: [{e:'O',x:0,y:-10},{e:'H',x:-17,y:11},{e:'H',x:17,y:11}],
+  CO2: [{e:'O',x:-26,y:0},{e:'C',x:0,y:0},{e:'O',x:26,y:0}],
+  CH4: [{e:'C',x:0,y:0},{e:'H',x:0,y:-22},{e:'H',x:21,y:8},{e:'H',x:-21,y:8},{e:'H',x:0,y:22}],
+  NH3: [{e:'N',x:0,y:-10},{e:'H',x:-18,y:10},{e:'H',x:18,y:10},{e:'H',x:0,y:20}],
+  HCl: [{e:'H',x:-17,y:0},{e:'Cl',x:16,y:0}],
+  NaOH:[{e:'Na',x:-22,y:0},{e:'O',x:4,y:0},{e:'H',x:22,y:0}],
+  NaCl:[{e:'Na',x:-17,y:0},{e:'Cl',x:17,y:0}],
+  Fe:  [{e:'Fe',x:0,y:0}],
+  Cu:  [{e:'Cu',x:0,y:0}],
+  CuSO4:[{e:'Cu',x:-22,y:-6},{e:'S',x:4,y:0},{e:'O',x:22,y:-14},{e:'O',x:22,y:14},{e:'O',x:4,y:18},{e:'O',x:4,y:-18}],
+  FeSO4:[{e:'Fe',x:-22,y:-6},{e:'S',x:4,y:0},{e:'O',x:22,y:-14},{e:'O',x:22,y:14},{e:'O',x:4,y:18},{e:'O',x:4,y:-18}],
+  H2O2:[{e:'H',x:-26,y:0},{e:'O',x:-10,y:0},{e:'O',x:10,y:0},{e:'H',x:26,y:0}],
+};
+
+const SCOL={H:'#d8d8d8',O:'#ff4444',C:'#505050',N:'#3366ff',Cl:'#44cc44',Na:'#aa55ff',Fe:'#ff8833',Cu:'#cc8822',S:'#cccc22'};
+const SRAD={H:10,O:13,C:13,N:13,Cl:15,Na:15,Fe:16,Cu:16,S:13};
+const sc=e=>SCOL[e]||'#888';
+const sr=e=>SRAD[e]||12;
+
+function shadecol(h,a){
+  const n=parseInt(h.replace('#',''),16);
+  return '#'+[n>>16&255,n>>8&255,n&255].map(c=>Math.max(0,Math.min(255,c+a)).toString(16).padStart(2,'0')).join('');
+}
+function isLightCol(h){
+  const n=parseInt(h.replace('#',''),16);
+  return ((n>>16&255)*299+(n>>8&255)*587+(n&255)*114)/1000>140;
+}
+
+// State
+let curRxn=SIM_RXNS[0], simAnim=false, simPaused=false;
+let simPhase=0, simProg=0, simLT=0, simParts=[];
+let simRaf=null, simInited=false;
+let simEChart=null, simCChart=null;
+let simTemp=25, simCat=false, simPress=1.0;
+
+function molPositions(mols, zx, zw, H){
+  const n=mols.length;
+  const cx=zx+zw/2;
+  if(n===1)return[{x:cx,y:H/2}];
+  if(n===2)return[{x:cx,y:H/2-52},{x:cx,y:H/2+52}];
+  return mols.map((_,i)=>({x:cx,y:H*(i+1)/(n+1)}));
+}
+
+function drawMol(ctx,formula,cx,cy,sc2=1,alpha=1){
+  const atoms=SIM_ATOMS[formula];
+  if(!atoms){
+    ctx.globalAlpha=alpha;
+    ctx.fillStyle='rgba(136,136,136,0.8)';
+    ctx.beginPath();ctx.arc(cx,cy,18*sc2,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.font=`bold ${12*sc2}px monospace`;
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(formula,cx,cy);
+    ctx.globalAlpha=1;return;
+  }
+  ctx.globalAlpha=alpha;
+  // bonds
+  ctx.strokeStyle='rgba(180,190,220,0.55)';ctx.lineWidth=3*sc2;
+  for(let i=0;i<atoms.length-1;i++)for(let j=i+1;j<atoms.length;j++){
+    const dx=atoms[i].x-atoms[j].x,dy=atoms[i].y-atoms[j].y;
+    if(dx*dx+dy*dy<1600){
+      ctx.beginPath();ctx.moveTo(cx+atoms[i].x*sc2,cy+atoms[i].y*sc2);
+      ctx.lineTo(cx+atoms[j].x*sc2,cy+atoms[j].y*sc2);ctx.stroke();
+    }
+  }
+  // atoms
+  atoms.forEach(a=>{
+    const ax=cx+a.x*sc2,ay=cy+a.y*sc2,r=sr(a.e)*sc2;
+    const col=sc(a.e);
+    const g=ctx.createRadialGradient(ax-r*0.3,ay-r*0.35,r*0.05,ax,ay,r);
+    g.addColorStop(0,'rgba(255,255,255,0.7)');g.addColorStop(0.4,col);g.addColorStop(1,shadecol(col,-50));
+    ctx.beginPath();ctx.arc(ax,ay,r,0,Math.PI*2);ctx.fillStyle=g;ctx.fill();
+    ctx.strokeStyle='rgba(255,255,255,0.25)';ctx.lineWidth=1;ctx.stroke();
+    if(r>9){
+      ctx.fillStyle=isLightCol(col)?'#111':'#fff';
+      ctx.font=`bold ${Math.max(8,r*0.78)}px monospace`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(a.e.length>2?a.e.slice(0,2):a.e,ax,ay);
+    }
+  });
+  ctx.globalAlpha=1;
+}
+
+function spawnParts(cx,cy){
+  simParts=[];
+  for(let i=0;i<48;i++){
+    const ang=Math.random()*Math.PI*2,spd=80+Math.random()*160;
+    simParts.push({x:cx,y:cy,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,
+      r:2+Math.random()*5,life:1,col:`hsl(${Math.random()*60+10},100%,65%)`});
+  }
+}
+
+function updateParts(ctx,dt){
+  simParts.forEach(p=>{
+    p.x+=p.vx*dt;p.y+=p.vy*dt;p.life=Math.max(0,p.life-dt*1.8);
+    p.vx*=0.94;p.vy*=0.94;
+    if(p.life>0){
+      ctx.globalAlpha=p.life*0.9;ctx.fillStyle=p.col;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.life,0,Math.PI*2);ctx.fill();
+    }
+  });ctx.globalAlpha=1;
+}
+
+function simConservMsg(rxn){
+  const rc={},pc={};
+  const cnt=(mols,o)=>mols.forEach(m=>{(SIM_ATOMS[m.f]||[]).forEach(a=>{o[a.e]=(o[a.e]||0)+m.c;});});
+  cnt(rxn.react,rc);cnt(rxn.prod,pc);
+  return '원자 보존: '+Object.keys(rc).map(e=>`${e} ${rc[e]}개 ✓`).join(' · ');
+}
+
+function drawSim(){
+  const cv=document.getElementById('sim-canvas');if(!cv)return;
+  const W=cv.width,H=cv.height;
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#050a14';ctx.fillRect(0,0,W,H);
+
+  const rxn=curRxn;
+  const zW=W/3;
+  const rPos=molPositions(rxn.react,0,zW,H);
+  const pPos=molPositions(rxn.prod,zW*2,zW,H);
+
+  // zone dividers
+  ctx.strokeStyle='rgba(42,58,90,0.5)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+  [zW,zW*2].forEach(x=>{ctx.beginPath();ctx.moveTo(x,8);ctx.lineTo(x,H-8);ctx.stroke();});
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(80,100,150,0.7)';ctx.font='11px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('반응물',zW/2,14);ctx.fillText('반응 영역',zW*1.5,14);ctx.fillText('생성물',zW*2.5,14);
+
+  const ph=simPhase,pr=simProg;
+
+  // Reactants
+  const rMov=(ph>=1&&ph<3)?pr:ph>=3?1:0;
+  const rAlpha=ph===2&&pr>0.4?(1-(pr-0.4)/0.6):ph>=3?0:1;
+  if(ph<3){
+    rPos.forEach((p,i)=>{
+      const tx=(W/2-p.x)*rMov,ty=(H/2-p.y)*rMov;
+      drawMol(ctx,rxn.react[i].f,p.x+tx,p.y+ty,1,rAlpha);
+      if(ph<1){
+        ctx.fillStyle='#7788aa';ctx.font='11px Segoe UI';ctx.textAlign='center';
+        const lbl=rxn.react[i].c>1?rxn.react[i].c+rxn.react[i].f:rxn.react[i].f;
+        ctx.fillText(lbl,p.x,p.y+38);
+      }
+    });
+  }
+
+  // Explosion phase
+  if(ph===2){
+    const dt=0.016; // approx frame dt for particle effect
+    updateParts(ctx,dt);
+    const flash=Math.max(0,0.5-pr)*0.8;
+    if(flash>0){ctx.fillStyle=`rgba(255,255,180,${flash})`;ctx.beginPath();ctx.arc(W/2,H/2,90,0,Math.PI*2);ctx.fill();}
+    ctx.fillStyle='rgba(0,255,200,0.9)';ctx.font='bold 14px Segoe UI';ctx.textAlign='center';
+    ctx.fillText('반응 중…',W/2,H/2-52);
+  }
+
+  // Products
+  if(ph>=3){
+    const a=ph===3?pr:1,sc2=ph===3?0.4+pr*0.6:1;
+    pPos.forEach((p,i)=>{
+      drawMol(ctx,rxn.prod[i].f,p.x,p.y,sc2,a);
+      if(a>0.5){
+        ctx.globalAlpha=a*0.8;ctx.fillStyle='#7788aa';ctx.font='11px Segoe UI';ctx.textAlign='center';
+        const lbl=rxn.prod[i].c>1?rxn.prod[i].c+rxn.prod[i].f:rxn.prod[i].f;
+        ctx.fillText(lbl,p.x,p.y+38);ctx.globalAlpha=1;
+      }
+    });
+  }
+
+  // Conservation message
+  if(ph>=4){
+    ctx.fillStyle='rgba(0,255,200,0.85)';ctx.font='11px Segoe UI';ctx.textAlign='center';
+    ctx.fillText(simConservMsg(rxn),W/2,H-10);
+  }
+
+  // Idle: ghost products
+  if(!simAnim&&ph===0){
+    pPos.forEach((p,i)=>{
+      drawMol(ctx,rxn.prod[i].f,p.x,p.y,1,0.18);
+    });
+  }
+}
+
+function simLoop(ts){
+  if(!simAnim)return;
+  if(!simLT)simLT=ts;
+  const dt=Math.min((ts-simLT)/1000,0.05);
+  simLT=ts;
+  if(!simPaused){
+    const spds=[0,0.55,1.1,0.7];
+    simProg=Math.min(simProg+(spds[simPhase]||0.6)*dt,1);
+    if(simProg>=1){
+      simPhase++;simProg=0;simLT=ts;
+      const cv=document.getElementById('sim-canvas');
+      if(simPhase===2&&cv)spawnParts(cv.width/2,cv.height/2);
+      const msgs=['','반응물 이동 중…','충돌·반응 중…','생성물 형성 중…'];
+      const st=document.getElementById('sim-status');
+      if(st)st.textContent=msgs[simPhase]||'';
+      if(simPhase>=4){
+        simAnim=false;simPhase=4;
+        if(st)st.textContent='✓ 반응이 완료되었습니다!';
+        drawSim();return;
+      }
+    }
+  }
+  drawSim();
+  simRaf=requestAnimationFrame(simLoop);
+}
+
+function startSim(){
+  const cv=document.getElementById('sim-canvas');if(!cv)return;
+  cv.width=cv.parentElement.clientWidth||760;cv.height=260;
+  if(simRaf)cancelAnimationFrame(simRaf);
+  simAnim=true;simPaused=false;simPhase=1;simProg=0;simLT=0;simParts=[];
+  const st=document.getElementById('sim-status');
+  if(st)st.textContent='반응물 이동 중…';
+  const pb=document.getElementById('btn-sim-pause');
+  if(pb)pb.textContent='⏸ 일시정지';
+  simRaf=requestAnimationFrame(simLoop);
+}
+
+function pauseSim(){
+  simPaused=!simPaused;
+  const pb=document.getElementById('btn-sim-pause');
+  if(pb)pb.textContent=simPaused?'▶ 재생':'⏸ 일시정지';
+  if(!simPaused&&simAnim){simLT=0;simRaf=requestAnimationFrame(simLoop);}
+}
+
+function resetSim(){
+  if(simRaf)cancelAnimationFrame(simRaf);
+  simAnim=false;simPaused=false;simPhase=0;simProg=0;simLT=0;simParts=[];
+  const pb=document.getElementById('btn-sim-pause');if(pb)pb.textContent='⏸ 일시정지';
+  const st=document.getElementById('sim-status');if(st)st.textContent='반응 대기 중…';
+  const cv=document.getElementById('sim-canvas');
+  if(cv){cv.width=cv.parentElement.clientWidth||760;cv.height=260;}
+  drawSim();
+}
+
+function selectSimRxn(id){
+  curRxn=SIM_RXNS.find(r=>r.id===id)||SIM_RXNS[0];
+  document.querySelectorAll('.sim-pbtn').forEach(b=>b.classList.toggle('active',b.dataset.rxn===id));
+  document.getElementById('sim-eq-input').value=curRxn.eq;
+  updateSimInfo();updateEChart();updateCChart();
+  resetSim();
+}
+
+function updateSimInfo(){
+  const r=curRxn,Ea=simCat?r.Ea_cat:r.Ea;
+  const te=document.getElementById('si-type');if(te)te.textContent=r.type;
+  const th=document.getElementById('si-thermo');
+  if(th){th.textContent=(r.exo?'발열 ΔH = ':'흡열 ΔH = ')+r.dH+' kJ/mol';th.style.color=r.exo?'#ff8866':'#66aaff';}
+  const ea=document.getElementById('si-ea');if(ea)ea.textContent=`Ea = ${Ea} kJ/mol${simCat?' (촉매)':''}`;
+  const co=document.getElementById('si-cond');if(co)co.textContent=r.cond;
+  const ex=document.getElementById('si-ex');if(ex)ex.textContent=r.ex;
+}
+
+// Energy diagram
+function energyCurve(dH,Ea){
+  const pts=[];
+  for(let i=0;i<=50;i++){
+    const x=i/50;
+    let y;
+    if(x<0.5){const t=x/0.5;y=Ea*0.5*(1-Math.cos(Math.PI*t));}
+    else{const t=(x-0.5)/0.5;y=Ea+(dH-Ea)*0.5*(1-Math.cos(Math.PI*t));}
+    pts.push(Math.round(y*10)/10);
+  }
+  return pts;
+}
+
+function updateEChart(){
+  const r=curRxn;const Ea=simCat?r.Ea_cat:r.Ea;
+  const data=energyCurve(r.dH,Ea);
+  const labels=Array.from({length:51},(_,i)=>i);
+  if(!simEChart){
+    const el=document.getElementById('sim-e-canvas');if(!el)return;
+    simEChart=new Chart(el,{
+      type:'line',
+      data:{labels,datasets:[{data,borderColor:'#00ffc8',borderWidth:2.5,fill:true,
+        backgroundColor:'rgba(0,255,200,0.07)',pointRadius:0,tension:0.4}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.parsed.y.toFixed(0)} kJ/mol`}}},
+        scales:{x:{display:false},y:{grid:{color:'rgba(42,58,90,0.4)'},ticks:{color:'#556699',font:{size:10}},
+          title:{display:true,text:'에너지 (kJ/mol)',color:'#556699',font:{size:10}}}},animation:{duration:500}}
+    });
+  } else {simEChart.data.datasets[0].data=data;simEChart.update();}
+  const n=document.getElementById('sim-e-note');
+  if(n)n.innerHTML=`Ea = <b>${Ea}</b> kJ/mol &nbsp;|&nbsp; ΔH = <b style="color:${r.exo?'#ff8866':'#66aaff'}">${r.dH}</b> kJ/mol&nbsp; ${r.exo?'(발열)':'(흡열)'}`;
+}
+
+// Concentration chart
+function concCurves(rxn,temp,hasCat,press){
+  const Ea=hasCat?rxn.Ea_cat:rxn.Ea;
+  const T=273+temp,R=8.314,T0=373;
+  const k=Math.exp(-Ea*1000/R*(1/T-1/T0))*press;
+  const kN=Math.max(0.02,Math.min(k,20));
+  const nPts=70,tMax=12;
+  const labels=Array.from({length:nPts+1},(_,i)=>(i*tMax/nPts).toFixed(1));
+  const RCOL=['#ff5577','#ff8844','#ffaa33'];
+  const PCOL=['#44aaff','#44ffaa','#ffdd44'];
+  const datasets=[];
+  rxn.react.forEach((r,i)=>{
+    const c0=(rxn.c0[r.f]||1)*press;
+    datasets.push({label:r.f,data:labels.map((_,j)=>{
+      const t=j*tMax/nPts;
+      const maxConv=rxn.reversible?(rxn.Keq/(1+rxn.Keq)):1;
+      const conv=maxConv*(1-Math.exp(-kN*t));
+      return +(c0*(1-conv)).toFixed(3);
+    }),borderColor:RCOL[i%3],borderWidth:2,fill:false,pointRadius:0,tension:0.4});
+  });
+  rxn.prod.forEach((p,i)=>{
+    const c0=(rxn.c0[rxn.react[0].f]||1)*press;
+    const maxP=(p.c/rxn.react[0].c)*c0;
+    datasets.push({label:p.f,data:labels.map((_,j)=>{
+      const t=j*tMax/nPts;
+      const maxConv=rxn.reversible?(rxn.Keq/(1+rxn.Keq)):1;
+      const conv=maxConv*(1-Math.exp(-kN*t));
+      return +(maxP*conv).toFixed(3);
+    }),borderColor:PCOL[i%3],borderWidth:2,fill:false,pointRadius:0,tension:0.4});
+  });
+  return{labels,datasets};
+}
+
+function updateCChart(){
+  const cd=concCurves(curRxn,simTemp,simCat,simPress);
+  const opts={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:'#8899cc',font:{size:10}}},
+      tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toFixed(2)} M`}}},
+    scales:{
+      x:{grid:{color:'rgba(42,58,90,0.4)'},ticks:{color:'#556699',font:{size:9},maxTicksLimit:5},
+        title:{display:true,text:'시간 (s)',color:'#556699',font:{size:10}}},
+      y:{grid:{color:'rgba(42,58,90,0.4)'},ticks:{color:'#556699',font:{size:10}},
+        title:{display:true,text:'농도 (M)',color:'#556699',font:{size:10}}}},
+    animation:{duration:400}};
+  if(!simCChart){
+    const el=document.getElementById('sim-c-canvas');if(!el)return;
+    simCChart=new Chart(el,{type:'line',data:{labels:cd.labels,datasets:cd.datasets},options:opts});
+  } else {
+    simCChart.data.labels=cd.labels;simCChart.data.datasets=cd.datasets;simCChart.update();
+  }
+}
+
+// Equation balancer (Gaussian elimination)
+function parseCF(f){
+  const r={};const re=/([A-Z][a-z]?)(\d*)/g;let m;
+  while((m=re.exec(f))!==null)if(m[1])r[m[1]]=(r[m[1]]||0)+(parseInt(m[2])||1);
+  return r;
+}
+function doBalance(){
+  const inp=document.getElementById('sim-eq-input');const val=inp.value.trim();
+  const err=document.getElementById('sim-err');
+  if(!val){if(err){err.style.display='block';err.textContent='반응식을 입력하세요.';}return;}
+  const norm=val.replace(/[⇌→⟶]/g,'->').replace(/\s+/g,'');
+  const sides=norm.split('->');
+  if(sides.length!==2){if(err){err.style.display='block';err.textContent='반응식 형식 오류. 화살표(-> 또는 →)를 포함하세요.';}return;}
+  const ps=s=>s.split('+').map(t=>{const m=t.match(/^(\d*)([A-Za-z0-9]+)$/);return m?{c:parseInt(m[1])||1,f:m[2]}:null;}).filter(Boolean);
+  const R=ps(sides[0]),P=ps(sides[1]);
+  if(!R.length||!P.length){if(err){err.style.display='block';err.textContent='반응물 또는 생성물을 인식할 수 없습니다.';}return;}
+  const all=[...R.map(r=>({...r,s:1})),...P.map(p=>({...p,s:-1}))];
+  const els=new Set();all.forEach(m=>{Object.keys(parseCF(m.f)).forEach(e=>els.add(e));});
+  const elA=[...els];const n=all.length,mR=elA.length;
+  let mat=elA.map(el=>all.map((m,i)=>m.s*(parseCF(m.f)[el]||0)));
+  // Gaussian: set last variable=1, solve remaining
+  let A=mat.map(row=>[...row.slice(0,n-1),-row[n-1]]);
+  const pivots=[];let row=0;
+  for(let c=0;c<n-1&&row<mR;c++){
+    let mx=row;for(let i=row+1;i<mR;i++)if(Math.abs(A[i][c])>Math.abs(A[mx][c]))mx=i;
+    if(Math.abs(A[mx][c])<1e-9)continue;
+    [A[row],A[mx]]=[A[mx],A[row]];
+    const pv=A[row][c];A[row]=A[row].map(v=>v/pv);
+    for(let i=0;i<mR;i++)if(i!==row&&Math.abs(A[i][c])>1e-9){const f=A[i][c];A[i]=A[i].map((v,j)=>v-f*A[row][j]);}
+    pivots.push({r:row,c});row++;
+  }
+  const sol=new Array(n).fill(0);sol[n-1]=1;
+  pivots.forEach(({r,c})=>{sol[c]=A[r][n-1];});
+  let sc2=1;for(let s=1;s<=24;s++){if(sol.every(v=>Math.abs(v*s-Math.round(v*s))<0.06)){sc2=s;break;}}
+  const co=sol.map(v=>Math.round(v*sc2));
+  if(co.some(v=>v<=0)){if(err){err.style.display='block';err.textContent='균형을 맞출 수 없습니다. 반응식을 확인하세요.';}return;}
+  const ok=elA.every(el=>{const sm=all.reduce((a,m,i)=>a+m.s*co[i]*(parseCF(m.f)[el]||0),0);return Math.abs(sm)<0.5;});
+  if(!ok){if(err){err.style.display='block';err.textContent='균형 맞추기 실패. 더 복잡한 반응식입니다.';}return;}
+  const fmt=(arr,off)=>arr.map((m,i)=>{const c=co[i+off];return(c===1?'':c)+m.f;}).join(' + ');
+  const arrow=val.includes('⇌')?' ⇌ ':' → ';
+  inp.value=fmt(R,0)+arrow+fmt(P,R.length);
+  if(err)err.style.display='none';
+}
+
+function onSimShow(){
+  const cv=document.getElementById('sim-canvas');
+  if(!cv)return;
+  cv.width=cv.parentElement.clientWidth||760;cv.height=260;
+  if(!simInited){
+    simInited=true;
+    document.getElementById('sim-temp').addEventListener('input',function(){
+      simTemp=parseInt(this.value);
+      document.getElementById('sim-temp-v').textContent=simTemp+' °C';
+      updateEChart();updateCChart();updateSimInfo();
+    });
+    document.getElementById('sim-press').addEventListener('input',function(){
+      simPress=parseInt(this.value)/10;
+      document.getElementById('sim-press-v').textContent=simPress.toFixed(1)+' atm';
+      updateCChart();
+    });
+    document.getElementById('sim-cat').addEventListener('change',function(){
+      simCat=this.checked;updateEChart();updateCChart();updateSimInfo();
+    });
+    selectSimRxn('h2burn');
+  } else {
+    drawSim();
+  }
 }
 
 initSidebars();
